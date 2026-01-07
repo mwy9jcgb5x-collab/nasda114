@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: header}"></head>
+<body class="auth-page">
+<div class="auth-container">
+    <div class="auth-box">
+        <h1 class="auth-logo"><a th:href="@{/static}">나의 영감 저장소</a></h1>
+        <h2>로그인</h2>
+
+        <!-- 에러 메시지 -->
+        <div class="alert alert-error" th:if="${param.error}">
+            아이디 또는 비밀번호가 올바르지 않습니다.
+        </div>
+
+        <!-- 성공 메시지 -->
+        <div class="alert alert-success" th:if="${message}" th:text="${message}"></div>
+
+        <form th:action="@{/templates/user/login}" method="post">
+            <div class="form-group">
+                <label for="username">아이디</label>
+                <input type="text" id="username" name="username" required
+                       placeholder="아이디를 입력하세요">
+            </div>
+
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input type="password" id="password" name="password" required
+                       placeholder="비밀번호를 입력하세요">
+            </div>
+
+            <button type="submit" class="btn-auth">로그인</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>계정이 없으신가요? <a th:href="@{/templates/user/signup}">회원가입</a></p>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+user/signup.html (회원가입)
+위치: src/main/resources/templates/user/signup.html
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: header}"></head>
+<body class="auth-page">
+<div class="auth-container">
+    <div class="auth-box">
+        <h1 class="auth-logo"><a th:href="@{/static}">나의 영감 저장소</a></h1>
+        <h2>회원가입</h2>
+
+        <!-- 에러 메시지 -->
+        <div class="alert alert-error" th:if="${error}" th:text="${error}"></div>
+
+        <form th:action="@{/templates/user/signup}" method="post" id="signupForm">
+            <div class="form-group">
+                <label for="username">아이디 *</label>
+                <input type="text" id="username" name="username" required
+                       placeholder="아이디를 입력하세요" minlength="3" maxlength="20">
+                <p class="help-text" id="usernameCheck"></p>
+            </div>
+
+            <div class="form-group">
+                <label for="password">비밀번호 *</label>
+                <input type="password" id="password" name="password" required
+                       placeholder="비밀번호를 입력하세요" minlength="6">
+            </div>
+
+            <div class="form-group">
+                <label for="passwordConfirm">비밀번호 확인 *</label>
+                <input type="password" id="passwordConfirm" required
+                       placeholder="비밀번호를 다시 입력하세요">
+                <p class="help-text" id="passwordCheck"></p>
+            </div>
+
+            <div class="form-group">
+                <label for="email">이메일 *</label>
+                <input type="email" id="email" name="email" required
+                       placeholder="이메일을 입력하세요">
+                <p class="help-text" id="emailCheck"></p>
+            </div>
+
+            <button type="submit" class="btn-auth">회원가입</button>
+        </form>
+
+        <div class="auth-footer">
+            <p>이미 계정이 있으신가요? <a th:href="@{/templates/user/login}">로그인</a></p>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

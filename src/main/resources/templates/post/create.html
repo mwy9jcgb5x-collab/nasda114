@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: header}"></head>
+<body>
+<header class="main-header">
+    <div class="header-container">
+        <h1 class="logo"><a th:href="@{/static}">나의 영감 저장소</a></h1>
+        <div class="user-menu">
+            <span class="username" th:text="${username}">사용자</span>
+            <a th:href="@{/templates/user/mypage}" class="btn-mypage">마이페이지</a>
+        </div>
+    </div>
+</header>
+
+<main class="create-page">
+    <div class="create-container">
+        <h2>새 게시물 등록</h2>
+
+        <form th:action="@{/templates/post/create}" method="post" enctype="multipart/form-data" id="createForm">
+            <!-- 제목 -->
+            <div class="form-group">
+                <label for="title">제목 *</label>
+                <input type="text" id="title" name="title" required maxlength="200"
+                       placeholder="제목을 입력하세요">
+            </div>
+
+            <!-- 카테고리 -->
+            <div class="form-group">
+                <label for="category">카테고리 *</label>
+                <select id="category" name="category" required>
+                    <option value="">선택하세요</option>
+                    <option value="디자인">디자인</option>
+                    <option value="사진">사진</option>
+                    <option value="일러스트">일러스트</option>
+                    <option value="라이프스타일">라이프스타일</option>
+                    <option value="여행">여행</option>
+                    <option value="음식">음식</option>
+                    <option value="패션">패션</option>
+                </select>
+            </div>
+
+            <!-- 설명 -->
+            <div class="form-group">
+                <label for="description">설명</label>
+                <textarea id="description" name="description" rows="6"
+                          placeholder="내용을 입력하세요"></textarea>
+            </div>
+
+            <!-- 이미지 업로드 -->
+            <div class="form-group">
+                <label for="images">이미지 *</label>
+                <input type="file" id="images" name="images" accept="image/*"
+                       multiple required onchange="previewImages(event)">
+                <p class="help-text">최대 10MB, 여러 장 선택 가능</p>
+            </div>
+
+            <!-- 이미지 미리보기 -->
+            <div id="imagePreview" class="image-preview"></div>
+
+            <!-- 버튼 -->
+            <div class="form-actions">
+                <button type="button" onclick="history.back()" class="btn-cancel">취소</button>
+                <button type="submit" class="btn-submit">등록하기</button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<script th:src="@{/js/post.js}"></script>
+</body>
+</html>

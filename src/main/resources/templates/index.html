@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout/header :: header}"></head>
+<body>
+<!-- 헤더 -->
+<header class="main-header">
+    <div class="header-container">
+        <!-- 로고 -->
+        <h1 class="logo">나의 영감 저장소</h1>
+
+        <!-- 검색창 (데스크탑) -->
+        <div class="search-container desktop-only">
+            <form th:action="@{/search}" method="get">
+                <input type="text" name="keyword" placeholder="검색어를 입력하세요" class="search-input" required>
+                <select name="type" class="search-type">
+                    <option value="내용">내용</option>
+                    <option value="제목">제목</option>
+                    <option value="작성자">작성자</option>
+                    <option value="카테고리">카테고리</option>
+                </select>
+                <button type="submit" class="search-btn">검색</button>
+            </form>
+        </div>
+
+        <!-- 검색 아이콘 (모바일) -->
+        <button class="search-icon-btn mobile-only" onclick="openSearchModal()">
+            🔍
+        </button>
+
+        <!-- 사용자 메뉴 -->
+        <div class="user-menu">
+            <div sec:authorize="isAuthenticated()">
+                <span class="username" th:text="${username}">사용자</span>
+                <a th:href="@{/templates/user/mypage}" class="btn-mypage">마이페이지</a>
+                <form th:action="@{/templates/user/logout}" method="post" style="display: inline;">
+                    <button type="submit" class="btn-logout">로그아웃</button>
+                </form>
+            </div>
+            <div sec:authorize="!isAuthenticated()">
+                <a th:href="@{/templates/user/login}" class="btn-login">로그인</a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- 카테고리 메뉴 -->
+<nav class="category-nav">
+    <div class="category-container">
+        <a th:href="@{/(category='전체')}"
+           th:classappend="${category == '전체'} ? 'active' : ''"
+           class="category-item">전체</a>
+        <a th:href="@{/(category='디자인')}"
+           th:classappend="${category == '디자인'} ? 'active' : ''"
+           class="category-item">디자인</a>
+        <a th:href="@{/(category='사진')}"
+           th:classappend="${category == '사진'} ? 'active' : ''"
+           class="category-item">사진</a>
+        <a th:href="@{/(category='일러스트')}"
+           th:classappend="${category == '일러스트'} ? 'active' : ''"
+           class="category-item">일러스트</a>
+        <a th:href="@{/(category='라이프스타일')}"
+           th:classappend="${category == '라이프스타일'} ? 'active' : ''"
+           class="category-item">라이프스타일</a>
+        <a th:href="@{/(category='여행')}"
+           th:classappend="${category == '여행'} ? 'active' : ''"
+           class="category-item">여행</a>
+        <a th:href="@{/(category='음식')}"
+           th:classappend="${category == '음식'} ? 'active' : ''"
+           class="category-item">음식</a>
+        <a th:href="@{/(category='패션')}"
+           th:classappend="${category == '패션'} ? 'active' : ''"
+           class="category-item">패션</a>
+    </div>
+</nav>
+
+<!-- 소개 섹션 -->
+<section class="intro-section">
+    <div class="intro-container">
+        <h2>일상 속 영감을 저장하는 공간</h2>
+        <p>당신의 감성을 담아보세요</p>
+    </div>
+</section>
+
+<!-- Masonry 레이아웃 -->
+<main class="main-content">
+    <div class="masonry-grid" id="masonry-grid">
+        <div class="masonry-item" th:each="post : ${posts}">
+            <a th:href="@{/templates/post/view/{id}(id=${post.id})}" class="post-card">
+                <div class="post-image" th:if="${!post.images.isEmpty()}">
+                    <img th:src="@{${post.images[0]}}" th:alt="${post.title}">
+                </div>
+                <div class="post-info">
+                    <h3 class="post-title" th:text="${post.title}">제목</h3>
+                    <p class="post-description" th:text="${post.description}">설명</p>
+                    <div class="post-meta">
+                        <span class="post-category" th:text="${post.category}">카테고리</span>
+                        <span class="post-author" th:text="${post.author.username}">작성자</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- 데이터가 없을 때 -->
+    <div class="no-data" th:if="${posts.isEmpty()}">
+        <p>아직 게시물이 없습니다.</p>
+    </div>
+</main>
+
+<!-- 등록 버튼 (로그인 시에만) -->
+<div sec:authorize="isAuthenticated()">
+    <a th:href="@{/templates/post/create}" class="floating-add-btn">+</a>
+</div>
+
+<!-- 모바일 검색 모달 -->
+<div id="searchModal" class="search-modal" style="display: none;">
+    <div class="search-modal-content">
+        <button class="close-modal" onclick="closeSearchModal()">&times;</button>
+        <form th:action="@{/search}" method="get">
+            <input type="text" name="keyword" placeholder="검색어를 입력하세요" class="search-input-modal" required>
+            <select name="type" class="search-type-modal">
+                <option value="내용">내용</option>
+                <option value="제목">제목</option>
+                <option value="작성자">작성자</option>
+                <option value="카테고리">카테고리</option>
+            </select>
+            <button type="submit" class="search-btn-modal">검색</button>
+        </form>
+    </div>
+</div>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

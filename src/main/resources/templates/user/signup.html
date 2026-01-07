@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: header}"></head>
+<style>
+    /* 회원가입 페이지 전용 스타일 */
+    .signup-page {
+        min-height: 100vh;
+        background: var(--bg-white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1.5rem;
+    }
+
+    .signup-container {
+        width: 100%;
+        max-width: 28rem;
+    }
+
+    .signup-logo {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .signup-logo h1 {
+        font-family: var(--font-serif);
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: color 0.3s ease;
+    }
+
+    .signup-logo h1:hover {
+        color: var(--text-medium);
+    }
+
+    .signup-logo p {
+        font-family: var(--font-sans);
+        color: var(--text-medium);
+    }
+
+    .signup-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-label {
+        display: block;
+        font-family: var(--font-sans);
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: var(--bg-cream);
+        border: 1px solid var(--border-light);
+        border-radius: 0.75rem;
+        font-family: var(--font-sans);
+        color: var(--text-dark);
+        transition: all 0.3s ease;
+        outline: none;
+    }
+
+    .form-input::placeholder {
+        color: var(--text-medium);
+    }
+
+    .form-input:focus {
+        box-shadow: 0 0 0 2px var(--secondary-beige);
+    }
+
+    .input-with-button {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .input-with-button .form-input {
+        flex: 1;
+    }
+
+    .btn-check {
+        padding: 0.75rem 1rem;
+        background: var(--text-dark);
+        color: white;
+        border: none;
+        border-radius: 0.75rem;
+        font-family: var(--font-sans);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+    }
+
+    .btn-check:hover {
+        background: var(--text-medium);
+    }
+
+    .input-wrapper {
+        position: relative;
+    }
+
+    .input-icon-btn {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-medium);
+        cursor: pointer;
+        padding: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.3s ease;
+    }
+
+    .input-icon-btn:hover {
+        color: var(--text-dark);
+    }
+
+    .help-text {
+        font-family: var(--font-sans);
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+
+    .help-text.success {
+        color: #22c55e;
+    }
+
+    .help-text.error {
+        color: #ef4444;
+    }
+
+    .error-message {
+        font-family: var(--font-sans);
+        font-size: 0.875rem;
+        color: #ef4444;
+        text-align: center;
+        padding: 0.75rem;
+        background: #fee;
+        border-radius: 0.5rem;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--primary-beige);
+        color: white;
+        border: none;
+        border-radius: 0.75rem;
+        font-family: var(--font-sans);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit:hover {
+        background: var(--secondary-beige);
+    }
+
+    .signup-footer {
+        margin-top: 1.5rem;
+        text-align: center;
+        font-family: var(--font-sans);
+        color: var(--text-medium);
+    }
+
+    .signup-footer a {
+        color: var(--text-dark);
+        text-decoration: underline;
+        transition: color 0.3s ease;
+    }
+
+    .signup-footer a:hover {
+        color: var(--primary-beige);
+    }
+
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .icon-sm {
+        width: 1rem;
+        height: 1rem;
+    }
+
+    /* 반응형 */
+    @media (max-width: 640px) {
+        .signup-logo h1 {
+            font-size: 2rem;
+        }
+
+        .signup-page {
+            padding: 2rem 1rem;
+        }
+    }
+</style>
+<body>
+<div class="signup-page">
+    <div class="signup-container">
+        <!-- 로고 -->
+        <div class="signup-logo">
+            <h1 onclick="window.location.href='/'">나의 스티커 다이어리</h1>
+            <p>나의 스티커 다이어리에 오신 것을 환영합니다</p>
+        </div>
+
+        <!-- 회원가입 폼 -->
+        <form th:action="@{/templates/user/signup}" method="post" class="signup-form" id="signupForm">
+
+            <!-- 아이디 -->
+            <div class="form-group">
+                <label for="username" class="form-label">아이디</label>
+                <div class="input-with-button">
+                    <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            class="form-input"
+                            placeholder="아이디를 입력하세요"
+                            required
+                            minlength="3"
+                            maxlength="20"
+                            th:value="${param.username}"
+                    />
+                    <button type="button" class="btn-check" onclick="checkUsername()">
+                        중복 확인
+                    </button>
+                </div>
+                <p id="usernameCheck" class="help-text" style="display: none;"></p>
+            </div>
+
+            <!-- 이메일 -->
+            <div class="form-group">
+                <label for="email" class="form-label">이메일</label>
+                <div class="input-wrapper">
+                    <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            class="form-input"
+                            placeholder="example@email.com"
+                            required
+                            th:value="${param.email}"
+                    />
+                    <button type="button" class="input-icon-btn" onclick="clearEmail()" style="display: none;" id="clearEmailBtn">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <p id="emailCheck" class="help-text" style="display: none;"></p>
+            </div>
+
+            <!-- 비밀번호 -->
+            <div class="form-group">
+                <label for="password" class="form-label">비밀번호</label>
+                <div class="input-wrapper">
+                    <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            class="form-input"
+                            placeholder="비밀번호를 입력하세요 (6자 이상)"
+                            required
+                            minlength="6"
+                    />
+                    <button type="button" class="input-icon-btn" onclick="togglePassword('password')" id="togglePasswordBtn">
+                        <svg class="icon" viewBox="0 0 24 24" id="eyeIcon">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 비밀번호 확인 -->
+            <div class="form-group">
+                <label for="confirmPassword" class="form-label">비밀번호 확인</label>
+                <div class="input-wrapper">
+                    <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            class="form-input"
+                            placeholder="비밀번호를 다시 입력하세요"
+                            required
+                    />
+                    <button type="button" class="input-icon-btn" onclick="togglePassword('confirmPassword')" id="toggleConfirmPasswordBtn">
+                        <svg class="icon" viewBox="0 0 24 24" id="eyeConfirmIcon">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+                <p id="passwordCheck" class="help-text" style="display: none;"></p>
+            </div>
+
+            <!-- 에러 메시지 -->
+            <div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+            <!-- 제출 버튼 -->
+            <button type="submit" class="btn-submit">
+                가입하기
+            </button>
+        </form>
+
+        <!-- 로그인 링크 -->
+        <div class="signup-footer">
+            <p>
+                이미 계정이 있으신가요?
+                <a th:href="@{/templates/user/login}">로그인</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/main.js}"></script>
+<script>
+    // ========== 아이디 중복 확인 ==========
+    let usernameChecked = false;
+    let usernameAvailable = false;
+
+    async function checkUsername() {
+        const username = document.getElementById('username').value.trim();
+        const checkElement = document.getElementById('usernameCheck');
+
+        if (!username) {
+            checkElement.textContent = '아이디를 입력해주세요.';
+            checkElement.className = 'help-text error';
+            checkElement.style.display = 'block';
+            return;
+        }
+
+        if (username.length < 3) {
+            checkElement.textContent = '아이디는 3자 이상이어야 합니다.';
+            checkElement.className = 'help-text error';
+            checkElement.style.display = 'block';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/user/check-username?username=${encodeURIComponent(username)}`);
+            const available = await response.json();
+
+            usernameChecked = true;
+            usernameAvailable = available;
+
+            if (available) {
+                checkElement.textContent = '✓ 사용 가능한 아이디입니다.';
+                checkElement.className = 'help-text success';
+            } else {
+                checkElement.textContent = '✗ 이미 사용 중인 아이디입니다.';
+                checkElement.className = 'help-text error';
+            }
+            checkElement.style.display = 'block';
+
+        } catch (error) {
+            console.error('아이디 확인 오류:', error);
+            checkElement.textContent = '확인 중 오류가 발생했습니다.';
+            checkElement.className = 'help-text error';
+            checkElement.style.display = 'block';
+        }
+    }
+
+    // 아이디 입력 시 중복 확인 상태 리셋
+    document.getElementById('username').addEventListener('input', function() {
+        usernameChecked = false;
+        usernameAvailable = false;
+        const checkElement = document.getElementById('usernameCheck');
+        checkElement.style.display = 'none';
+    });
+
+    // ========== 이메일 유효성 검사 ==========
+    const emailInput = document.getElementById('email');
+    const emailCheck = document.getElementById('emailCheck');
+    const clearEmailBtn = document.getElementById('clearEmailBtn');
+
+    emailInput.addEventListener('input', function() {
+        if (this.value.length > 0) {
+            clearEmailBtn.style.display = 'flex';
+        } else {
+            clearEmailBtn.style.display = 'none';
+            emailCheck.style.display = 'none';
+        }
+    });
+
+    emailInput.addEventListener('blur', async function() {
+        const email = this.value.trim();
+
+        if (!email) {
+            emailCheck.style.display = 'none';
+            return;
+        }
+
+        // 이메일 형식 검증
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            emailCheck.textContent = '✗ 올바른 이메일 형식을 입력해주세요.';
+            emailCheck.className = 'help-text error';
+            emailCheck.style.display = 'block';
+            return;
+        }
+
+        // 이메일 중복 확인
+        try {
+            const response = await fetch(`/user/check-email?email=${encodeURIComponent(email)}`);
+            const available = await response.json();
+
+            if (available) {
+                emailCheck.textContent = '✓ 사용 가능한 이메일입니다.';
+                emailCheck.className = 'help-text success';
+            } else {
+                emailCheck.textContent = '✗ 이미 사용 중인 이메일입니다.';
+                emailCheck.className = 'help-text error';
+            }
+            emailCheck.style.display = 'block';
+
+        } catch (error) {
+            console.error('이메일 확인 오류:', error);
+        }
+    });
+
+    function clearEmail() {
+        emailInput.value = '';
+        clearEmailBtn.style.display = 'none';
+        emailCheck.style.display = 'none';
+        emailInput.focus();
+    }
+
+    // ========== 비밀번호 표시/숨김 ==========
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = inputId === 'password' ?
+            document.getElementById('eyeIcon') :
+            document.getElementById('eyeConfirmIcon');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = `
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                `;
+        } else {
+            input.type = 'password';
+            icon.innerHTML = `
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                `;
+        }
+    }
+
+    // ========== 비밀번호 확인 ==========
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const passwordCheck = document.getElementById('passwordCheck');
+
+    confirmPasswordInput.addEventListener('input', function() {
+        const password = passwordInput.value;
+        const confirmPassword = this.value;
+
+        if (confirmPassword.length === 0) {
+            passwordCheck.style.display = 'none';
+            return;
+        }
+
+        if (password === confirmPassword) {
+            passwordCheck.textContent = '✓ 비밀번호가 일치합니다.';
+            passwordCheck.className = 'help-text success';
+        } else {
+            passwordCheck.textContent = '✗ 비밀번호가 일치하지 않습니다.';
+            passwordCheck.className = 'help-text error';
+        }
+        passwordCheck.style.display = 'block';
+    });
+
+    // ========== 폼 제출 전 유효성 검사 ==========
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        // 아이디 중복 확인 체크
+        if (!usernameChecked || !usernameAvailable) {
+            e.preventDefault();
+            alert('아이디 중복 확인을 해주세요.');
+            return false;
+        }
+
+        // 이메일 형식 검증
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            e.preventDefault();
+            alert('올바른 이메일 형식을 입력해주세요.');
+            return false;
+        }
+
+        // 비밀번호 길이 검증
+        if (password.length < 6) {
+            e.preventDefault();
+            alert('비밀번호는 6자 이상이어야 합니다.');
+            return false;
+        }
+
+        // 비밀번호 일치 확인
+        if (password !== confirmPassword) {
+            e.preventDefault();
+            alert('비밀번호가 일치하지 않습니다.');
+            return false;
+        }
+
+        return true;
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/header :: header}"></head>
+<body>
+<header class="main-header">
+    <div class="header-container">
+        <h1 class="logo"><a th:href="@{/static}">나의 영감 저장소</a></h1>
+        <div class="user-menu">
+            <span class="username" th:text="${username}">사용자</span>
+            <a th:href="@{/static}" class="btn-home">홈으로</a>
+        </div>
+    </div>
+</header>
+
+<main class="mypage">
+    <div class="mypage-container">
+        <div class="mypage-header">
+            <h2>마이페이지</h2>
+            <p>총 <strong th:text="${postCount}">0</strong>개의 게시물</p>
+        </div>
+
+        <!-- 내 게시물 목록 -->
+        <div class="masonry-grid">
+            <div class="masonry-item" th:each="post : ${myPosts}">
+                <a th:href="@{/templates/post/view/{id}(id=${post.id})}" class="post-card">
+                    <div class="post-image" th:if="${!post.images.isEmpty()}">
+                        <img th:src="@{${post.images[0]}}" th:alt="${post.title}">
+                    </div>
+                    <div class="post-info">
+                        <h3 class="post-title" th:text="${post.title}">제목</h3>
+                        <p class="post-description" th:text="${post.description}">설명</p>
+                        <div class="post-meta">
+                            <span class="post-category" th:text="${post.category}">카테고리</span>
+                            <span class="post-date" th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd')}">날짜</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 데이터가 없을 때 -->
+        <div class="no-data" th:if="${myPosts.isEmpty()}">
+            <p>아직 작성한 게시물이 없습니다.</p>
+            <a th:href="@{/templates/post/create}" class="btn-create">첫 게시물 작성하기</a>
+        </div>
+    </div>
+</main>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

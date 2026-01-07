@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout/header :: header}"></head>
+<style>
+    /* 관리자 페이지 전용 스타일 */
+    .admin-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem;
+    }
+
+    .admin-layout {
+        display: flex;
+        gap: 2rem;
+    }
+
+    .admin-sidebar {
+        width: 16rem;
+        flex-shrink: 0;
+    }
+
+    .admin-title {
+        font-family: var(--font-serif);
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 1.5rem;
+    }
+
+    .admin-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .admin-menu-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1rem;
+        background: var(--bg-white);
+        border: none;
+        border-radius: 0.75rem;
+        font-family: var(--font-sans);
+        font-weight: 500;
+        color: var(--text-dark);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .admin-menu-item:hover {
+        background: var(--bg-cream);
+    }
+
+    .admin-menu-item.active {
+        background: var(--text-dark);
+        color: white;
+    }
+
+    .admin-menu-item-content {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .admin-content {
+        flex: 1;
+    }
+
+    .content-section {
+        display: none;
+    }
+
+    .content-section.active {
+        display: block;
+    }
+
+    .section-title {
+        font-family: var(--font-serif);
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 1.5rem;
+    }
+
+    .report-item,
+    .suspended-item,
+    .banned-word-item,
+    .category-item {
+        padding: 1.5rem;
+        background: var(--bg-cream);
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 0.75rem;
+    }
+
+    .report-title {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .report-reporter {
+        font-size: 0.875rem;
+        color: var(--text-medium);
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .status-pending {
+        background: #fee;
+        color: #c33;
+    }
+
+    .report-reason {
+        color: var(--text-dark);
+        margin-bottom: 1rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        padding: 0.5rem 1rem;
+        background: var(--text-dark);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: var(--text-medium);
+    }
+
+    .btn-secondary {
+        padding: 0.5rem 1rem;
+        background: white;
+        color: var(--text-dark);
+        border: 1px solid var(--border-light);
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+        background: var(--bg-cream);
+    }
+
+    .btn-beige {
+        padding: 0.5rem 1rem;
+        background: var(--primary-beige);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-beige:hover {
+        background: var(--secondary-beige);
+    }
+
+    .btn-add {
+        padding: 0.75rem 1.5rem;
+        background: var(--text-dark);
+        color: white;
+        border: none;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-add:hover {
+        background: var(--text-medium);
+    }
+
+    .suspended-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .suspended-details p:first-child {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.25rem;
+    }
+
+    .suspended-details p:last-child {
+        font-size: 0.875rem;
+        color: var(--text-medium);
+    }
+
+    .word-item,
+    .cat-item {
+        padding: 1rem;
+        background: var(--bg-cream);
+        border-radius: 0.75rem;
+        margin-bottom: 0.75rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .word-text,
+    .cat-text {
+        font-weight: 500;
+        color: var(--text-dark);
+    }
+
+    .btn-delete {
+        padding: 0.25rem 0.75rem;
+        background: transparent;
+        color: #e74c3c;
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-delete:hover {
+        background: #fee;
+    }
+
+    .btn-edit {
+        padding: 0.25rem 0.75rem;
+        background: transparent;
+        color: var(--text-dark);
+        border: none;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-edit:hover {
+        background: var(--border-light);
+    }
+
+    .category-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    /* 아이콘 스타일 */
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    /* 반응형 */
+    @media (max-width: 1024px) {
+        .admin-layout {
+            flex-direction: column;
+        }
+
+        .admin-sidebar {
+            width: 100%;
+        }
+
+        .admin-menu {
+            flex-direction: row;
+            overflow-x: auto;
+        }
+
+        .admin-menu-item {
+            flex-shrink: 0;
+        }
+    }
+</style>
+<body>
+<!-- 헤더 -->
+<header class="main-header">
+    <div class="header-container">
+        <!-- 로고 -->
+        <div style="flex-shrink: 0;">
+            <h1 class="logo" onclick="window.location.href='/'">나의 스티커 다이어리</h1>
+        </div>
+
+        <!-- 검색창 - 데스크탑 -->
+        <div class="search-container desktop-only">
+            <div style="position: relative; width: 100%;">
+                <svg class="icon search-icon" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input
+                        type="text"
+                        placeholder="영감을 검색하세요..."
+                        class="search-input"
+                        style="padding-left: 3rem; padding-right: 1rem;"
+                />
+            </div>
+        </div>
+
+        <!-- 사용자 메뉴 -->
+        <div class="user-menu">
+            <div style="position: relative;">
+                <button class="user-avatar-btn" id="userAvatarBtn">
+                    <div class="user-avatar">
+                        <svg class="icon" viewBox="0 0 24 24" style="stroke: white;">
+                            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <svg class="icon chevron-icon" id="chevronIcon" viewBox="0 0 24 24">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+
+                <!-- 드롭다운 메뉴 -->
+                <div class="dropdown-menu hidden" id="dropdownMenu">
+                    <div class="dropdown-header">
+                        <p class="dropdown-label">관리자</p>
+                        <p class="dropdown-username" th:text="${username}">admin</p>
+                    </div>
+                    <form th:action="@{/templates/user/logout}" method="post">
+                        <button type="submit" class="logout-btn">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            로그아웃
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- 메인 콘텐츠 -->
+<main class="admin-container">
+    <div class="admin-layout">
+        <!-- 사이드바 메뉴 -->
+        <aside class="admin-sidebar">
+            <h2 class="admin-title">관리자 페이지</h2>
+            <nav class="admin-menu">
+                <button class="admin-menu-item active" onclick="showSection('reports')">
+                    <div class="admin-menu-item-content">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <span>신고 목록</span>
+                    </div>
+                    <svg class="icon" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+
+                <button class="admin-menu-item" onclick="showSection('suspended')">
+                    <div class="admin-menu-item-content">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        <span>정지 계정 목록</span>
+                    </div>
+                    <svg class="icon" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+
+                <button class="admin-menu-item" onclick="showSection('banned')">
+                    <div class="admin-menu-item-content">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                        </svg>
+                        <span>금지어 목록</span>
+                    </div>
+                    <svg class="icon" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+
+                <button class="admin-menu-item" onclick="showSection('categories')">
+                    <div class="admin-menu-item-content">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                        <span>카테고리 목록</span>
+                    </div>
+                    <svg class="icon" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- 콘텐츠 영역 -->
+        <div class="admin-content">
+            <!-- 신고 목록 -->
+            <section id="reports-section" class="content-section active">
+                <h3 class="section-title">신고 목록</h3>
+
+                <div th:each="i : ${#numbers.sequence(1, 5)}">
+                    <div class="report-item">
+                        <div class="report-header">
+                            <div>
+                                <p class="report-title" th:text="'게시물 신고 #' + ${i}">게시물 신고 #1</p>
+                                <p class="report-reporter" th:text="'신고자: user' + ${i + 9}">신고자: user10</p>
+                            </div>
+                            <span class="status-badge status-pending">대기중</span>
+                        </div>
+                        <p class="report-reason">신고 사유: 부적절한 내용</p>
+                        <div class="action-buttons">
+                            <button class="btn-primary">확인</button>
+                            <button class="btn-secondary">무시</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 정지 계정 목록 -->
+            <section id="suspended-section" class="content-section">
+                <h3 class="section-title">정지 계정 목록</h3>
+
+                <div th:each="i : ${#numbers.sequence(1, 3)}">
+                    <div class="suspended-item">
+                        <div class="suspended-info">
+                            <div class="suspended-details">
+                                <p th:text="'suspended_user' + ${i}">suspended_user1</p>
+                                <p>정지 사유: 커뮤니티 규칙 위반 | 정지 기간: 2024.01.01 ~ 2024.02.01</p>
+                            </div>
+                            <button class="btn-beige">정지 해제</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 금지어 목록 -->
+            <section id="banned-section" class="content-section">
+                <h3 class="section-title">금지어 목록</h3>
+                <button class="btn-add">+ 금지어 추가</button>
+
+                <div th:each="i : ${#numbers.sequence(1, 10)}">
+                    <div class="word-item">
+                        <p class="word-text" th:text="'금지어 ' + ${i}">금지어 1</p>
+                        <button class="btn-delete">삭제</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 카테고리 목록 -->
+            <section id="categories-section" class="content-section">
+                <h3 class="section-title">카테고리 목록</h3>
+                <button class="btn-add">+ 카테고리 추가</button>
+
+                <div th:each="category : ${'디자인,아트,사진,패션,인테리어,음식,여행,자연,운동,취미'.split(',')}">
+                    <div class="cat-item">
+                        <p class="cat-text" th:text="${category}">카테고리</p>
+                        <div class="category-actions">
+                            <button class="btn-edit">수정</button>
+                            <button class="btn-delete">삭제</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+
+<script th:src="@{/js/main.js}"></script>
+<script>
+    // 섹션 전환
+    function showSection(sectionId) {
+        // 모든 섹션 숨기기
+        document.querySelectorAll('.content-section').forEach(section => {
+            section.classList.remove('active');
+        });
+
+        // 모든 메뉴 아이템 비활성화
+        document.querySelectorAll('.admin-menu-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // 선택된 섹션 표시
+        document.getElementById(sectionId + '-section').classList.add('active');
+
+        // 클릭된 메뉴 아이템 활성화
+        event.currentTarget.classList.add('active');
+    }
+</script>
+</body>
+</html>

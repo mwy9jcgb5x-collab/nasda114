@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{layout/header :: header}"></head>
+<body>
+<header class="main-header">
+    <div class="header-container">
+        <h1 class="logo"><a th:href="@{/static}">나의 영감 저장소</a></h1>
+        <div class="user-menu" sec:authorize="isAuthenticated()">
+            <span class="username" th:text="${username}">사용자</span>
+            <a th:href="@{/templates/user/mypage}" class="btn-mypage">마이페이지</a>
+        </div>
+    </div>
+</header>
+
+<main class="view-page">
+    <div class="view-container">
+        <!-- 헤더 -->
+        <div class="view-header">
+            <button onclick="history.back()" class="btn-back">← 뒤로가기</button>
+
+            <div class="view-actions" th:if="${isOwner}">
+                <a th:href="@{/templates/post/edit/{id}(id=${post.id})}" class="btn-edit">수정</a>
+                <form th:action="@{/templates/post/delete/{id}(id=${post.id})}" method="post"
+                      onsubmit="return confirm('정말 삭제하시겠습니까?')" style="display: inline;">
+                    <button type="submit" class="btn-delete">삭제</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 제목 -->
+        <h2 class="post-title" th:text="${post.title}">제목</h2>
+
+        <!-- 카테고리 -->
+        <p class="post-category-label">카테고리: <span th:text="${post.category}">카테고리</span></p>
+
+        <!-- 메타 정보 -->
+        <div class="post-meta-info">
+            <span class="post-author">작성자: <strong th:text="${post.author.username}">작성자</strong></span>
+            <span class="post-date" th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</span>
+        </div>
+
+        <!-- 이미지 -->
+        <div class="post-images">
+            <div class="image-item" th:each="imageUrl : ${post.images}">
+                <img th:src="@{${imageUrl}}" alt="게시물 이미지">
+            </div>
+        </div>
+
+        <!-- 설명 -->
+        <div class="post-description">
+            <p th:text="${post.description}">설명</p>
+        </div>
+
+        <!-- 댓글 섹션 -->
+        <div class="comments-section">
+            <h3>댓글 <span th:text="${commentCount}">0</span></h3>
+
+            <!-- 댓글 작성 (로그인 시) -->
+            <div sec:authorize="isAuthenticated()" class="comment-form">
+                <form th:action="@{/comment/create}" method="post">
+                    <input type="hidden" name="postId" th:value="${post.id}">
+                    <textarea name="text" placeholder="댓글을 입력하세요" required rows="3"></textarea>
+                    <button type="submit" class="btn-comment-submit">댓글 작성</button>
+                </form>
+            </div>
+
+            <!-- 댓글 목록 -->
+            <div class="comments-list">
+                <div class="comment-item" th:each="comment : ${post.comments}">
+                    <div class="comment-header">
+                        <span class="comment-author" th:text="${comment.author.username}">작성자</span>
+                        <span class="comment-date" th:text="${#temporals.format(comment.createdAt, 'yyyy-MM-dd HH:mm')}">날짜</span>
+                    </div>
+                    <p class="comment-text" th:text="${comment.text}">댓글 내용</p>
+
+                    <!-- 댓글 삭제 (본인 or 관리자) -->
+                    <div th:if="${username != null && (username == comment.author.username)}">
+                        <form th:action="@{/comment/delete/{id}(id=${comment.id})}" method="post"
+                              onsubmit="return confirm('댓글을 삭제하시겠습니까?')">
+                            <input type="hidden" name="postId" th:value="${post.id}">
+                            <button type="submit" class="btn-comment-delete">삭제</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script th:src="@{/js/comment.js}"></script>
+</body>
+</html>
