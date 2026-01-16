@@ -167,11 +167,48 @@
 </script>
 
 <script th:inline="none">
+    // =========================
+    // Infinite Scroll (existing)
+    // =========================
     let currentPage = 0;
     let isLoading = false;
     let hasMore = (typeof window.__HOME_HAS_NEXT__ === 'boolean') ? window.__HOME_HAS_NEXT__ : true;
     let activeCategory = '전체';
     const pageSize = (typeof window.__HOME_PAGE_SIZE__ === 'number') ? window.__HOME_PAGE_SIZE__ : 12;
+
+    // ✅ Scroll Restore State
+    const HOME_STATE_KEY = 'homeScrollState:v1';
+
+    function saveHomeState(extra = {}) {
+        try {
+            const state = {
+                scrollY: window.scrollY || 0,
+                currentPage,
+                hasMore,
+                activeCategory,
+                pageSize,
+                ts: Date.now(),
+                ...extra
+            };
+            sessionStorage.setItem(HOME_STATE_KEY, JSON.stringify(state));
+        } catch (e) {
+            console.warn('saveHomeState failed:', e);
+        }
+    }
+
+    function loadHomeState() {
+        try {
+            const raw = sessionStorage.getItem(HOME_STATE_KEY);
+            if (!raw) return null;
+            return JSON.parse(raw);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function clearHomeState() {
+        try { sessionStorage.removeItem(HOME_STATE_KEY); } catch (e) {}
+    }
 
     function navigateToCreate() {
         window.location.href = '/posts/create';
@@ -227,6 +264,7 @@
 
         currentPage = 0;
         hasMore = true;
+        saveHomeState(); // ✅ category change also 저장
         loadPostsByCategory(category);
     }
 
@@ -265,6 +303,8 @@
 
             hasMore = !page.last;
             currentPage = page.number || 0;
+
+            saveHomeState(); // ✅ 상태 저장
         } catch (e) {
             console.error('게시물 로드 오류:', e);
         } finally {
@@ -326,15 +366,19 @@
             const posts = page.content || [];
             if (!posts || posts.length === 0) {
                 hasMore = false;
+                saveHomeState();
                 return;
             }
 
             currentPage = page.number;
             hasMore = !page.last;
             appendPosts(posts);
+
+            saveHomeState(); // ✅ 더 불러온 후 상태 저장
         } catch (e) {
             console.error('추가 게시물 로드 오류:', e);
             hasMore = false;
+            saveHomeState();
         } finally {
             isLoading = false;
             if (loadingIndicator) loadingIndicator.classList.add('hidden');
@@ -375,11 +419,103 @@
         masonryGrid.insertAdjacentHTML('beforeend', postsHTML);
     }
 
+    // ✅ 복원용: 특정 페이지를 강제로 로드해서 append (restore에서 호출)
+    async function loadPageAndAppend(pageNum) {
+        const page = await apiGetPosts({
+            page: pageNum,
+            size: pageSize,
+            category: activeCategory !== '전체' ? activeCategory : null
+        });
+
+        const posts = page.content || [];
+        if (pageNum === 0) {
+            renderPosts(posts);
+        } else {
+            appendPosts(posts);
+        }
+
+        currentPage = page.number || pageNum;
+        hasMore = !page.last;
+        return page;
+    }
+
+    // ✅ 뒤로가기/새로고침 복원
+    async function restoreHomeIfNeeded() {
+        const state = loadHomeState();
+        if (!state) return;
+
+        // 너무 오래된 state는 무시
+        if (state.ts && Date.now() - state.ts > 2 * 60 * 60 * 1000) {
+            clearHomeState();
+            return;
+        }
+
+        // 저장된 카테고리 반영
+        if (state.activeCategory) {
+            activeCategory = state.activeCategory;
+            // 버튼 UI 반영
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('bg-[#D4C4B0]', 'text-white');
+                btn.classList.add('bg-[#F9F6F1]', 'text-[#8B7355]', 'hover:bg-[#F0EBE3]');
+            });
+            const selectedBtn = document.querySelector(`.category-btn[data-category="${activeCategory}"]`);
+            if (selectedBtn) {
+                selectedBtn.classList.remove('bg-[#F9F6F1]', 'text-[#8B7355]', 'hover:bg-[#F0EBE3]');
+                selectedBtn.classList.add('bg-[#D4C4B0]', 'text-white');
+            }
+        }
+
+        // 저장된 currentPage까지 다시 로드
+        const targetPage = Number(state.currentPage);
+        if (!Number.isFinite(targetPage) || targetPage < 0) {
+            requestAnimationFrame(() => window.scrollTo(0, state.scrollY || 0));
+            return;
+        }
+
+        // page=0부터 targetPage까지 순서대로 쌓기
+        try {
+            isLoading = true;
+            for (let p = 0; p <= targetPage; p++) {
+                await loadPageAndAppend(p);
+            }
+        } catch (e) {
+            console.warn('restoreHomeIfNeeded load failed:', e);
+        } finally {
+            isLoading = false;
+        }
+
+        requestAnimationFrame(() => window.scrollTo(0, state.scrollY || 0));
+    }
+
+    // ✅ 상세로 이동하기 직전에 상태 저장 (/posts/{id})
+    document.addEventListener('click', (e) => {
+        const a = e.target.closest('a');
+        if (!a) return;
+        const href = a.getAttribute('href') || '';
+        if (href.startsWith('/posts/')) {
+            saveHomeState();
+        }
+    });
+
+    // ✅ 스크롤 저장(가벼운 throttle)
+    let __saveT = null;
     window.addEventListener('scroll', function() {
         const scrollPosition = window.innerHeight + window.scrollY;
         const threshold = document.body.offsetHeight - 500;
         if (scrollPosition >= threshold) loadMorePosts();
+
+        if (__saveT) return;
+        __saveT = setTimeout(() => {
+            saveHomeState();
+            __saveT = null;
+        }, 250);
     });
+
+    // BFCache 복원(pageshow) + 일반 로드(DOMContentLoaded)
+    window.addEventListener('pageshow', () => {
+        restoreHomeIfNeeded();
+    });
+    document.addEventListener('DOMContentLoaded', restoreHomeIfNeeded);
 </script>
 </body>
 </html>

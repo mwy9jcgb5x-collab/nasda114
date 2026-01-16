@@ -69,6 +69,8 @@
 
                         <th:block th:each="image, iter : ${post.images}">
 
+
+
                             <!-- ✅ 첫 번째 슬라이드: 꾸미기 캔버스(스티커) 유지 -->
                             <div class="swiper-slide" th:if="${iter.first}">
                                 <div id="sticker-canvas"
