@@ -10,108 +10,164 @@
 
     // --- [1] 핵심 렌더링: 드래그 이동 & 조작 버튼 & 개별 삭제 ---
     function renderStickers() {
+        // 1. 기존 레이어 초기화
         document.querySelectorAll('.sticker-layer').forEach(layer => layer.innerHTML = '');
 
         stickers.forEach((s) => {
             const targetLayer = document.querySelector(`.sticker-layer[data-image-id="${s.postImageId}"]`);
             if (!targetLayer) return;
 
-            const isSelected = selectedSticker === s;
-            const el = document.createElement('div');
+            const isSelected = (selectedSticker === s);
 
-            // ✅ z-index를 대폭 높여 클릭 우선순위와 가시성 확보
+            // ✅ 핵심: CSS 고정값 대신 자바스크립트가 계산한 '절대 픽셀' 사용 (기본 92px)
+            const absoluteSize = 92 * (s.scale || 1);
+
+            // 2. 컨테이너 생성
+            const el = document.createElement('div');
             el.className = `sticker-item absolute transform -translate-x-1/2 -translate-y-1/2 cursor-move ${isSelected ? 'z-[10000]' : 'z-10'}`;
+
+            // ✅ 인라인 스타일로 절대 px값을 강제 주입
+            el.style.width = absoluteSize + 'px';
+            el.style.height = absoluteSize + 'px';
             el.style.left = s.x + '%';
             el.style.top = s.y + '%';
 
-            // ✅ 모든 이모지 0.43 사이즈 동일 고정 적용
-            const flipX = s.isFlipped ? -1 : 1;
-            const currentScale = 0.43;
-            el.style.transform = `translate(-50%, -50%) scale(${currentScale * flipX}, ${currentScale}) rotate(${s.rotation || 0}deg)`;
+            // 3. 스티커 이미지 생성
+            const img = document.createElement('img');
+            img.src = s.imgUrl;
+            img.className = 'sticker-main-img';
 
-            el.innerHTML = `
-                <img src="${s.imgUrl}" class="w-24 h-24 object-contain pointer-events-none bg-transparent" 
-                     style="background: transparent !important; ${isSelected ? 'filter: drop-shadow(0 0 10px #fbcfe8); border: 2.5px dashed #fbcfe8; border-radius: 12px;' : ''}">
-                ${isDecorating && isSelected ? `
-                    <div class="btn-single-remove absolute -top-5 -right-5 bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm cursor-pointer shadow-xl border-2 border-white z-[10001]">×</div>
-                    
-                    <div class="sticker-control-panel absolute -bottom-16 left-1/2 -translate-x-1/2 flex gap-1.5 bg-white/95 p-2 rounded-full shadow-2xl border border-pink-200 z-[10001] pointer-events-auto" style="min-width: 190px;">
-                        <button type="button" class="c-btn op-up">➕</button>
-                        <button type="button" class="c-btn op-down">➖</button>
-                        <button type="button" class="c-btn op-rotate">🔄</button>
-                        <button type="button" class="c-btn op-flip">↔️</button>
-                        <button type="button" class="c-btn op-reset">🧹</button>
-                    </div>
-                ` : ''}
-            `;
+            // 이미지는 부모(el)의 크기를 100% 채우도록 설정
+            Object.assign(img.style, {
+                width: '100%',
+                height: '100%',
+                display: 'block',
+                pointerEvents: 'none',
+                background: 'transparent',
+                objectFit: 'contain'
+            });
 
-            // ✅ 버튼 이벤트 직접 연결 (ReferenceError 방지)
-            if (isSelected && isDecorating) {
-                el.querySelector('.op-up').onclick = (e) => { e.stopPropagation(); updateAction('scale', 0.1); };
-                el.querySelector('.op-down').onclick = (e) => { e.stopPropagation(); updateAction('scale', -0.1); };
-                el.querySelector('.op-rotate').onclick = (e) => { e.stopPropagation(); updateAction('rotate', 15); };
-                el.querySelector('.op-flip').onclick = (e) => { e.stopPropagation(); updateAction('flip', 0); };
-                el.querySelector('.op-reset').onclick = (e) => { e.stopPropagation(); updateAction('reset', 0); };
-                el.querySelector('.btn-single-remove').onclick = (e) => {
-                    e.stopPropagation();
-                    stickers = stickers.filter(item => item !== s);
-                    selectedSticker = null;
-                    renderStickers();
-                };
+            if (isSelected) {
+                img.style.filter = 'drop-shadow(0 0 10px #fbcfe8)';
+                img.style.border = '2.5px dashed #fbcfe8';
+                img.style.borderRadius = '12px';
             }
 
-            // ✅ 드래그 이동 활성화 (mousedown)
-            // [A] 드래그 이동 기능 (mousedown 이벤트 핸들러)
+            // transform에서는 크기를 제외하고 위치와 회전만 담당
+            el.style.transform = `translate(-50%, -50%) rotate(${s.rotation || 0}deg)`;
+            el.appendChild(img);
+
+            // 4 & 5. 삭제 버튼 및 조작 패널 통합
+            el.innerHTML += `
+            <div class="btn-single-remove ${isSelected ? '' : 'hidden'}"
+                 style="position: absolute; top: -12px; right: -12px; width: 28px; height: 28px; 
+                        background-color: #ff4d4f; color: white; border: 2px solid white; border-radius: 50%; 
+                        display: flex; align-items: center; justify-content: center; font-size: 18px; 
+                        font-weight: bold; cursor: pointer; z-index: 10010; pointer-events: auto;">
+                ×
+            </div>
+            <div class="sticker-control-panel absolute -bottom-16 left-1/2 -translate-x-1/2 flex gap-1.5 bg-white/95 p-2 rounded-full shadow-2xl border border-pink-200 z-[10001] pointer-events-auto ${isSelected ? '' : 'hidden'}" 
+                 style="min-width: 150px;">
+                <button type="button" class="c-btn op-up">➕</button>
+                <button type="button" class="c-btn op-down">➖</button>
+                <button type="button" class="c-btn op-rotate">🔄</button>
+                <button type="button" class="c-btn op-reset">🧹</button>
+            </div>
+        `;
+
+            // 6. 이벤트 직접 연결 (Swiper 및 10px 조절 대응)
+            if (isSelected) {
+                const removeBtn = el.querySelector('.btn-single-remove');
+                if (removeBtn) {
+                    removeBtn.addEventListener('click', (e) => {
+                        e.preventDefault(); e.stopPropagation();
+                        stickers = stickers.filter(item => item !== s);
+                        selectedSticker = null;
+                        renderStickers();
+                    }, true);
+                }
+
+                const panel = el.querySelector('.sticker-control-panel');
+                if (panel) {
+                    panel.querySelectorAll('button').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            // 10px 단위 조절을 위해 updateAction 호출
+                            if(btn.classList.contains('op-up')) updateAction('scale', 0.1);
+                            if(btn.classList.contains('op-down')) updateAction('scale', -0.1);
+                            if(btn.classList.contains('op-rotate')) updateAction('rotate', 15);
+                            if(btn.classList.contains('op-reset')) updateAction('reset', 0);
+                        }, true);
+                    });
+                }
+            }
+
+            // 7. 최적화된 드래그 이벤트 (Swiper 잠금 포함)
             el.onmousedown = (e) => {
-                // 꾸미기 모드가 아니거나 조작 패널을 클릭한 경우는 드래그 무시
-                if (!isDecorating || e.target.closest('.sticker-control-panel')) return;
+                if (!isDecorating || e.target.closest('.sticker-control-panel') || e.target.classList.contains('btn-single-remove')) return;
+                e.preventDefault(); e.stopPropagation();
 
-                e.preventDefault();
-                e.stopPropagation();
+                const swiperEl = document.querySelector('.postImagesSwiper');
+                const swiperInstance = swiperEl ? swiperEl.swiper : null;
+                if (swiperInstance) swiperInstance.allowTouchMove = false;
 
-                selectedSticker = s; // 클릭한 스티커 선택 상태로 변경
-                renderStickers(); // 테두리 표시를 위해 즉시 다시 그림
+                selectedSticker = s;
+                renderStickers();
 
                 const rect = targetLayer.getBoundingClientRect();
-
-                // 마우스가 움직일 때 실행될 함수
                 const onMouseMove = (mE) => {
-                    // 부모 레이어 안에서의 상대적 좌표(%) 계산
                     let newX = ((mE.clientX - rect.left) / rect.width) * 100;
                     let newY = ((mE.clientY - rect.top) / rect.height) * 100;
-
-                    // 화면 밖으로 나가지 않도록 0~100 사이로 제한
                     s.x = Math.max(0, Math.min(100, newX));
                     s.y = Math.max(0, Math.min(100, newY));
-
-                    // ✅ 실시간 위치 반영
                     el.style.left = s.x + '%';
                     el.style.top = s.y + '%';
                 };
-
-                // 마우스를 뗐을 때 실행될 함수
                 const onMouseUp = () => {
+                    if (swiperInstance) swiperInstance.allowTouchMove = true;
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
-
-                    // 최종 위치 확정을 위해 한 번 더 렌더링
-                    renderStickers();
                 };
-
-                // 문서 전체에 이벤트 등록 (스티커 밖으로 마우스가 나가도 드래그 유지되도록)
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
             };
+
             targetLayer.appendChild(el);
         });
     }
 
     function updateAction(type, val) {
         if (!selectedSticker) return;
-        // 0.43 고정 요구에 따라 scale 변경 로직은 유지하되 렌더링 시 0.43 적용 (필요 시 scale 값 반영 가능)
-        if (type === 'rotate') selectedSticker.rotation = ((selectedSticker.rotation || 0) + val) % 360;
-        if (type === 'flip') selectedSticker.isFlipped = !selectedSticker.isFlipped;
-        if (type === 'reset') { selectedSticker.rotation = 0; selectedSticker.isFlipped = false; }
+
+        if (type === 'scale') {
+            // 1. 기준 사이즈 설정
+            const baseSize = 92;
+
+            // 2. 현재 scale 값을 가져옵니다. (없으면 1.0)
+            let currentScale = selectedSticker.scale || 1.0;
+
+            // 3. 10px에 해당하는 scale 변화량을 계산합니다.
+            // 92px의 10%는 9.2px이므로, 약 0.108 정도가 10px의 비율입니다.
+            // 계산하기 쉽게 10 / 92 값을 더해줍니다.
+            const scaleStep = 10 / baseSize;
+
+            if (val > 0) {
+                currentScale += scaleStep; // 확대 (+)
+            } else {
+                currentScale -= scaleStep; // 축소 (-)
+            }
+
+            // 4. 최소 scale을 0.4(약 37px)로 제한하여 사라짐 방지
+            selectedSticker.scale = Math.max(0.4, currentScale);
+
+        } else if (type === 'rotate') {
+            selectedSticker.rotation = ((selectedSticker.rotation || 0) + val) % 360;
+        } else if (type === 'reset') {
+            selectedSticker.scale = 1.0;
+            selectedSticker.rotation = 0;
+        }
+
+        // ✅ 변경된 상태로 화면을 즉시 다시 그립니다.
         renderStickers();
     }
 
@@ -139,7 +195,7 @@
                         stickerId: s.stickerId,
                         posX: parseFloat(s.x.toFixed(2)),
                         posY: parseFloat(s.y.toFixed(2)),
-                        scale: 0.43,
+                        scale: parseFloat((s.scale || 1.0).toFixed(2)),
                         rotation: s.rotation || 0,
                         zIndex: 10
                     }))
@@ -234,7 +290,7 @@
                 stickers = res.data.map(item => ({
                     dbId: item.decorationId, postImageId: item.postImageId,
                     stickerId: item.stickerId, imgUrl: item.stickerImageUrl,
-                    x: item.posX, y: item.posY, scale: 0.43,
+                    x: item.posX, y: item.posY, scale: 1.0,
                     rotation: item.rotation, zIndex: item.zIndex, isSaved: true
                 }));
                 renderStickers();
@@ -253,10 +309,15 @@
                 if (!imgUrl || !imageId) return;
 
                 stickers.push({
-                    postImageId: Number(imageId), stickerId: Number(stickerId),
-                    imgUrl: imgUrl, x: ((e.clientX - rect.left) / rect.width) * 100,
+                    postImageId: Number(imageId),
+                    stickerId: Number(stickerId),
+                    imgUrl: imgUrl,
+                    x: ((e.clientX - rect.left) / rect.width) * 100,
                     y: ((e.clientY - rect.top) / rect.height) * 100,
-                    scale: 0.43, rotation: 0, isFlipped: false, isSaved: false
+                    scale: 1.0,
+                    rotation: 0,
+                    isFlipped: false,
+                    isSaved: false
                 });
                 renderStickers();
             });

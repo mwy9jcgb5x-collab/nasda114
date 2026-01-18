@@ -212,7 +212,7 @@
                         <div class="flex flex-col gap-2 pt-2">
                             <button onclick="clearAllStickers()"
                                     class="w-full py-2 bg-red-50 text-red-500 rounded-lg text-xs font-bold hover:bg-red-100 transition-all border border-red-100">
-                                🗑️ 스티커 비우기
+                                🗑️ 스티커 모두 지우기
                             </button>
 
                             <div class="flex gap-2">
@@ -391,130 +391,6 @@
 </script>
 <script th:src="@{/js/sticker.js}"></script>
 
-<!-- 스티커 로직(기존 유지) -->
-<!--<script th:inline="none">-->
-<!--    const availableStickers = [-->
-<!--        '❤️', '⭐', '✨', '🌟', '💖', '🌈', '🌸', '🌺', '🌻', '🌼',-->
-<!--        '🦋', '🎀', '💕', '💝', '🎉', '🎊', '🌙', '☀️', '🌞', '🔥'-->
-<!--    ];-->
-
-<!--    let stickers = [];-->
-<!--    let isDecorating = false;-->
-
-<!--    const decoStartView = document.getElementById('deco-start-view');-->
-<!--    const decoActiveView = document.getElementById('deco-active-view');-->
-<!--    const stickerLayer = document.getElementById('sticker-layer');-->
-<!--    const stickerCanvas = document.getElementById('sticker-canvas');-->
-<!--    const stickerPalette = document.getElementById('sticker-palette');-->
-<!--    console.log("sticker imageId =", stickerCanvas?.dataset?.imageId);-->
-
-<!--    function initPalette() {-->
-<!--        if (!stickerPalette) return;-->
-<!--        stickerPalette.innerHTML = '';-->
-<!--        availableStickers.forEach(emoji => {-->
-<!--            const div = document.createElement('div');-->
-<!--            div.className = 'palette-item';-->
-<!--            div.textContent = emoji;-->
-<!--            div.draggable = true;-->
-<!--            div.addEventListener('dragstart', (e) => {-->
-<!--                e.dataTransfer.setData('emoji', emoji);-->
-<!--                e.dataTransfer.effectAllowed = 'copy';-->
-<!--            });-->
-<!--            stickerPalette.appendChild(div);-->
-<!--        });-->
-<!--    }-->
-
-<!--    function startDecoration() {-->
-<!--        if (!stickerLayer) return;-->
-<!--        isDecorating = true;-->
-<!--        if (decoStartView) decoStartView.classList.add('hidden');-->
-<!--        if (decoActiveView) decoActiveView.classList.remove('hidden');-->
-<!--        stickerLayer.classList.remove('pointer-events-none');-->
-<!--        initPalette();-->
-<!--    }-->
-
-<!--    function cancelDecoration() {-->
-<!--        if (confirm('작성 중인 내용이 사라집니다. 취소하시겠습니까?')) {-->
-<!--            isDecorating = false;-->
-<!--            stickers = [];-->
-<!--            renderStickers();-->
-<!--            if (decoStartView) decoStartView.classList.remove('hidden');-->
-<!--            if (decoActiveView) decoActiveView.classList.add('hidden');-->
-<!--            if (stickerLayer) stickerLayer.classList.add('pointer-events-none');-->
-<!--        }-->
-<!--    }-->
-
-<!--    function saveDecoration() {-->
-<!--        console.log('저장된 스티커:', stickers);-->
-<!--        alert('꾸미기가 저장되었습니다!');-->
-<!--        isDecorating = false;-->
-<!--        if (decoStartView) decoStartView.classList.remove('hidden');-->
-<!--        if (decoActiveView) decoActiveView.classList.add('hidden');-->
-<!--        if (stickerLayer) stickerLayer.classList.add('pointer-events-none');-->
-<!--    }-->
-
-<!--    if (stickerCanvas) {-->
-<!--        stickerCanvas.addEventListener('dragover', (e) => {-->
-<!--            if (!isDecorating) return;-->
-<!--            e.preventDefault();-->
-<!--            e.dataTransfer.dropEffect = 'copy';-->
-<!--        });-->
-
-<!--        stickerCanvas.addEventListener('drop', (e) => {-->
-<!--            if (!isDecorating) return;-->
-<!--            e.preventDefault();-->
-<!--            const emoji = e.dataTransfer.getData('emoji');-->
-
-<!--            if (emoji) {-->
-<!--                const rect = stickerCanvas.getBoundingClientRect();-->
-<!--                const x = ((e.clientX - rect.left) / rect.width) * 100;-->
-<!--                const y = ((e.clientY - rect.top) / rect.height) * 100;-->
-<!--                addSticker(emoji, x, y);-->
-<!--            }-->
-<!--        });-->
-<!--    }-->
-
-<!--    function addSticker(emoji, x, y) {-->
-<!--        stickers.push({-->
-<!--            id: Date.now() + Math.random(),-->
-<!--            emoji, x, y-->
-<!--        });-->
-<!--        renderStickers();-->
-<!--    }-->
-
-<!--    function removeSticker(id) {-->
-<!--        stickers = stickers.filter(s => s.id !== id);-->
-<!--        renderStickers();-->
-<!--    }-->
-
-<!--    function renderStickers() {-->
-<!--        if (!stickerLayer) return;-->
-<!--        stickerLayer.innerHTML = '';-->
-<!--        stickers.forEach(sticker => {-->
-<!--            const el = document.createElement('div');-->
-<!--            el.className = 'sticker-item group';-->
-<!--            el.style.left = sticker.x + '%';-->
-<!--            el.style.top = sticker.y + '%';-->
-
-<!--            el.innerHTML = `-->
-<!--                <span>${sticker.emoji}</span>-->
-<!--                ${isDecorating ? `<div class="sticker-remove-btn">×</div>` : ''}-->
-<!--            `;-->
-
-<!--            if (isDecorating) {-->
-<!--                const btn = el.querySelector('.sticker-remove-btn');-->
-<!--                if (btn) {-->
-<!--                    btn.onclick = (e) => {-->
-<!--                        e.stopPropagation();-->
-<!--                        removeSticker(sticker.id);-->
-<!--                    };-->
-<!--                }-->
-<!--            }-->
-<!--            stickerLayer.appendChild(el);-->
-<!--        });-->
-<!--    }-->
-<!--</script>-->
-
 <script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
 <script>
     (function () {
@@ -524,6 +400,11 @@
         new Swiper(root, {
             slidesPerView: 1,
             spaceBetween: 12,
+            touchStartPreventDefault: false, // 이 설정이 false여야 내부 요소 클릭이 잘 됩니다.
+            preventClicks: false,            // 클릭 차단 방지
+            preventClicksPropagation: false,  // 클릭 전파 차단 방지
+            observer: true,                // DOM 변화 감지
+            observeParents: true,          // 부모 요소 변화 감지
             pagination: {
                 el: root.querySelector(".swiper-pagination"),
                 clickable: true,

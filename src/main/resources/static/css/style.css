@@ -1097,6 +1097,55 @@ html {
     box-shadow: 0 4px 12px rgba(139, 115, 85, 0.1);
 }
 
+/* 이미지 영역 위의 스티커 이미지 고정 사이즈 */
+.sticker-item img.sticker-img {
+    object-contain: contain;
+    pointer-events: none;
+    background: transparent !important;
+}
+
+/* 스티커 아이템 컨테이너 */
+.sticker-item {
+    position: absolute !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 삭제 버튼이 선택되지 않았을 때는 확실히 숨김 */
+.sticker-item .btn-single-remove.hidden,
+.sticker-item .sticker-control-panel.hidden {
+    display: none !important;
+}
+
+/* 스티커 메인 이미지 고정 스타일 */
+.sticker-main-img {
+    display: block;
+    pointer-events: none; /* 이미지가 클릭을 방해하지 않게 함 */
+    background: transparent !important;
+    object-fit: contain;
+}
+
+/* 개별 삭제 버튼 (빨간 X) */
+.btn-single-remove {
+    position: absolute !important;
+    top: -10px !important;
+    right: -10px !important;
+    width: 26px !important;
+    height: 26px !important;
+    background-color: #ff4d4f !important;
+    color: white !important;
+    border: 2px solid white !important;
+    border-radius: 50% !important;
+    z-index: 99999 !important; /* 최상단 보장 */
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px !important;
+    font-weight: bold !important;
+}
+
 /* 스크롤바 숨기기 유틸리티 */
 .scrollbar-hide {
     -ms-overflow-style: none;
