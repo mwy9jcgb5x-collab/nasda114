@@ -1,489 +1,354 @@
-<!--
-  ✅ src/main/resources/templates/admin/dashboard.html
-  - 관리자 대시보드(신고/정지/금지어/카테고리) UI
-  - 공통 head / header는 layout/header.html fragment 사용
--->
-
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-
 <head>
-    <!-- ✅ 공통 head(head fragment) 삽입 -->
     <th:block th:replace="~{layout/header :: head}"></th:block>
-
-    <!-- ✅ 관리자 페이지 전용 스타일 -->
     <style>
-        /* 관리자 페이지 전용 스타일 */
         .admin-container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 3rem 1.5rem;
         }
-
         .admin-layout {
             display: flex;
             gap: 2rem;
         }
-
         .admin-sidebar {
             width: 16rem;
             flex-shrink: 0;
         }
-
         .admin-title {
-            font-family: var(--font-serif);
             font-size: 1.75rem;
             font-weight: 600;
-            color: var(--text-dark);
+            color: #4a3f35;
             margin-bottom: 1.5rem;
         }
-
         .admin-menu {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
         }
-
         .admin-menu-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            display: block;
+            width: 100%;
             padding: 0.75rem 1rem;
-            background: var(--bg-white);
-            border: none;
+            text-align: left;
+            background: #ffffff;
+            border: 1px solid #eee1d5;
             border-radius: 0.75rem;
-            font-family: var(--font-sans);
-            font-weight: 500;
-            color: var(--text-dark);
             cursor: pointer;
-            transition: all 0.3s ease;
+            color: #4a3f35;
             text-decoration: none;
         }
-
-        .admin-menu-item:hover {
-            background: var(--bg-cream);
-        }
-
         .admin-menu-item.active {
-            background: var(--text-dark);
+            background: #4a3f35;
             color: white;
         }
-
-        .admin-menu-item-content {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
         .admin-content {
             flex: 1;
         }
-
         .content-section {
             display: none;
         }
-
         .content-section.active {
             display: block;
         }
-
-        .section-title {
-            font-family: var(--font-serif);
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 1.5rem;
-        }
-
-        .report-item,
-        .suspended-item,
-        .banned-word-item,
-        .category-item {
+        .report-item, .word-item, .cat-item, .user-item {
             padding: 1.5rem;
-            background: var(--bg-cream);
+            background: #fdfaf7;
+            border: 1px solid #eee1d5;
             border-radius: 0.75rem;
             margin-bottom: 1rem;
-        }
-
-        .report-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 0.75rem;
-        }
-
-        .report-title {
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 0.25rem;
-        }
-
-        .report-reporter {
-            font-size: 0.875rem;
-            color: var(--text-medium);
-        }
-
-        .status-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .status-pending {
-            background: #fee;
-            color: #c33;
-        }
-
-        .report-reason {
-            color: var(--text-dark);
-            margin-bottom: 1rem;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            padding: 0.5rem 1rem;
-            background: var(--text-dark);
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: var(--text-medium);
-        }
-
-        .btn-secondary {
-            padding: 0.5rem 1rem;
-            background: white;
-            color: var(--text-dark);
-            border: 1px solid var(--border-light);
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-secondary:hover {
-            background: var(--bg-cream);
-        }
-
-        .btn-beige {
-            padding: 0.5rem 1rem;
-            background: var(--primary-beige);
-            color: white;
-            border: none;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-beige:hover {
-            background: var(--secondary-beige);
-        }
-
-        .btn-add {
-            padding: 0.75rem 1.5rem;
-            background: var(--text-dark);
-            color: white;
-            border: none;
-            border-radius: 0.75rem;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 1.5rem;
-        }
-
-        .btn-add:hover {
-            background: var(--text-medium);
-        }
-
-        .suspended-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .suspended-details p:first-child {
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 0.25rem;
-        }
-
-        .suspended-details p:last-child {
-            font-size: 0.875rem;
-            color: var(--text-medium);
-        }
-
-        .word-item,
-        .cat-item {
-            padding: 1rem;
-            background: var(--bg-cream);
-            border-radius: 0.75rem;
-            margin-bottom: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .word-text,
-        .cat-text {
-            font-weight: 500;
-            color: var(--text-dark);
-        }
-
-        .btn-delete {
-            padding: 0.25rem 0.75rem;
-            background: transparent;
-            color: #e74c3c;
-            border: none;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-delete:hover {
-            background: #fee;
-        }
-
-        .btn-edit {
-            padding: 0.25rem 0.75rem;
-            background: transparent;
-            color: var(--text-dark);
-            border: none;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-edit:hover {
-            background: var(--border-light);
-        }
-
-        .category-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        /* 아이콘 스타일 */
-        .icon {
-            width: 1.25rem;
-            height: 1.25rem;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        /* 반응형 */
-        @media (max-width: 1024px) {
-            .admin-layout {
-                flex-direction: column;
-            }
-
-            .admin-sidebar {
-                width: 100%;
-            }
-
-            .admin-menu {
-                flex-direction: row;
-                overflow-x: auto;
-            }
-
-            .admin-menu-item {
-                flex-shrink: 0;
-            }
         }
     </style>
 </head>
-
-<body class="min-h-screen bg-white">
-
-<!-- ✅ 공통 헤더(fragment) 사용 -->
+<body class="bg-white">
 <div th:replace="~{layout/header :: header}"></div>
 
-<!-- 메인 콘텐츠 -->
 <main class="admin-container">
     <div class="admin-layout">
-        <!-- 사이드바 메뉴 -->
+
         <aside class="admin-sidebar">
             <h2 class="admin-title">관리자 페이지</h2>
             <nav class="admin-menu">
-                <button class="admin-menu-item active" type="button" onclick="showSection('reports', event)">
-                    <div class="admin-menu-item-content">
-                        <svg class="icon" viewBox="0 0 24 24">
-                            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                            <line x1="12" y1="9" x2="12" y2="13"></line>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                        </svg>
-                        <span>신고 목록</span>
-                    </div>
-                    <svg class="icon" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
+                <button class="admin-menu-item"
+                        onclick="showSection('users', event)">
+                    계정 목록
                 </button>
-
-                <button class="admin-menu-item" type="button" onclick="showSection('suspended', event)">
-                    <div class="admin-menu-item-content">
-                        <svg class="icon" viewBox="0 0 24 24">
-                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="9" cy="7" r="4"></circle>
-                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                        </svg>
-                        <span>정지 계정 목록</span>
-                    </div>
-                    <svg class="icon" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
+                <button class="admin-menu-item"
+                        onclick="showSection('reports', event)">
+                    신고 목록
                 </button>
-
-                <button class="admin-menu-item" type="button" onclick="showSection('banned', event)">
-                    <div class="admin-menu-item-content">
-                        <svg class="icon" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-                        </svg>
-                        <span>금지어 목록</span>
-                    </div>
-                    <svg class="icon" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
+                <button class="admin-menu-item"
+                        onclick="showSection('banned', event)">
+                    금지어 목록
                 </button>
-
-                <button class="admin-menu-item" type="button" onclick="showSection('categories', event)">
-                    <div class="admin-menu-item-content">
-                        <svg class="icon" viewBox="0 0 24 24">
-                            <line x1="8" y1="6" x2="21" y2="6"></line>
-                            <line x1="8" y1="12" x2="21" y2="12"></line>
-                            <line x1="8" y1="18" x2="21" y2="18"></line>
-                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                        </svg>
-                        <span>카테고리 목록</span>
-                    </div>
-                    <svg class="icon" viewBox="0 0 24 24" style="width: 1.25rem; height: 1.25rem;">
-                        <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
+                <button class="admin-menu-item"
+                        onclick="showSection('categories', event)">
+                    카테고리 목록
                 </button>
             </nav>
         </aside>
 
-        <!-- 콘텐츠 영역 -->
-        <div class="admin-content">
-            <!-- 신고 목록 -->
-            <section id="reports-section" class="content-section active">
-                <h3 class="section-title">신고 목록</h3>
+        <div class="admin-content" id="scrollArea">
 
-                <div th:each="i : ${#numbers.sequence(1, 5)}">
-                    <div class="report-item">
-                        <div class="report-header">
-                            <div>
-                                <p class="report-title" th:text="'게시물 신고 #' + ${i}">게시물 신고 #1</p>
-                                <p class="report-reporter" th:text="'신고자: user' + ${i + 9}">신고자: user10</p>
-                            </div>
-                            <span class="status-badge status-pending">대기중</span>
+            <!--            <section id="users-section" class="content-section active">-->
+            <!--                <h3 class="admin-title">계정 목록</h3>-->
+            <!--                <div th:each="user : ${memberList}" class="user-item">-->
+            <!--                    <div style="display: flex; justify-content: space-between;">-->
+            <!--                        <div>-->
+            <!--                            <strong th:text="${user.email}"></strong>-->
+            <!--                            <p th:text="'이름: ' + ${user.name} + ' | 권한: ' + ${user.role}"-->
+            <!--                               style="margin-top: 5px; color: #8a7e72;"></p>-->
+            <!--                        </div>-->
+            <!--                        <a th:href="@{/admin/user/delete(email=${user.email})}"-->
+            <!--                           onclick="return confirm('삭제하시겠습니까?')"-->
+            <!--                           style="color:#e74c3c; font-weight:bold;">-->
+            <!--                            강퇴-->
+            <!--                        </a>-->
+            <!--                    </div>-->
+            <!--                </div>-->
+            <!--            </section>-->
+
+            <section id="users-section" class="content-section">
+                <h3 class="admin-title">계정 목록</h3>
+
+                <div th:each="user : ${userList}" class="user-item" style="border-bottom: 1px solid #eee; padding: 10px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong th:text="${user.nickname}" style="font-size: 1.1em;">닉네임</strong>
+
+                            <p style="margin-top: 5px; color: #8a7e72; font-size: 0.9em;">
+                                상태: <span th:text="${user.status}"
+                                          th:style="${user.status == 'SUSPENDED' ? 'color:#e74c3c; font-weight:bold;' : ''}"></span>
+
+                                <span th:if="${user.suspension_end_date != null}"
+                                      th:text="' | 종료일: ' + ${user.suspension_end_date}"></span>
+                            </p>
                         </div>
-                        <p class="report-reason">신고 사유: 부적절한 내용</p>
-                        <div class="action-buttons">
-                            <button class="btn-primary" type="button">확인</button>
-                            <button class="btn-secondary" type="button">무시</button>
-                        </div>
+
+
                     </div>
                 </div>
             </section>
 
-            <!-- 정지 계정 목록 -->
-            <section id="suspended-section" class="content-section">
-                <h3 class="section-title">정지 계정 목록</h3>
+            <section id="reports-section" class="content-section">
+                <h3 class="admin-title">신고 목록</h3>
 
-                <div th:each="i : ${#numbers.sequence(1, 3)}">
-                    <div class="suspended-item">
-                        <div class="suspended-info">
-                            <div class="suspended-details">
-                                <p th:text="'suspended_user' + ${i}">suspended_user1</p>
-                                <p>정지 사유: 커뮤니티 규칙 위반 | 정지 기간: 2024.01.01 ~ 2024.02.01</p>
-                            </div>
-                            <button class="btn-beige" type="button">정지 해제</button>
+                <div style="display: flex; gap: 10px; margin-bottom: 25px;">
+                    <a th:href="@{/admin/dashboard(section='reports', type='post')}"
+                       th:style="${type == 'post' ? 'padding:0.6rem 1.2rem; background:#4a3f35; color:white; border-radius:0.5rem; text-decoration:none;' : 'padding:0.6rem 1.2rem; background:#f5f5f5; color:#4a3f35; border-radius:0.5rem; text-decoration:none; border:1px solid #ddd;'}">
+                        📄 게시글 신고
+                    </a>
+                    <a th:href="@{/admin/dashboard(section='reports', type='comment')}"
+                       th:style="${type == 'comment' ? 'padding:0.6rem 1.2rem; background:#4a3f35; color:white; border-radius:0.5rem; text-decoration:none;' : 'padding:0.6rem 1.2rem; background:#f5f5f5; color:#4a3f35; border-radius:0.5rem; text-decoration:none; border:1px solid #ddd;'}">
+                        💬 댓글 신고
+                    </a>
+                </div>
+
+                <div th:if="${type == 'post'}">
+                    <h4 style="margin-bottom: 15px; color: #4a3f35;">📄 게시글 신고 내역</h4>
+                    <div th:each="report : ${postReportList}" class="report-item">
+                        <div style="display: flex; justify-content: space-between;">
+                            <strong th:text="'게시글 신고 #' + ${report.reportId}"></strong>
+                            <span th:text="${report.status}" style="color: #c33; font-weight: bold;"></span>
                         </div>
+                        <p th:text="'사유: ' + ${report.reason}" style="margin-top:0.75rem; color: #8a7e72;"></p>
+                        <form th:action="@{/admin/report/process}" method="post" style="margin-top: 1rem;">
+                            <input type="hidden" name="reportId" th:value="${report.reportId}">
+                            <input type="hidden" name="type" value="post">
+                            <button name="action" value="APPROVE" style="padding:0.4rem 0.8rem; background:#4a3f35; color:white; border-radius:0.4rem; border:none; cursor:pointer;">승인(삭제)</button>
+                        </form>
+                    </div>
+
+                    <div th:if="${postTotalPages > 0}" style="display: flex; justify-content: center; gap: 8px; margin-top: 25px;">
+                        <a th:href="@{/admin/dashboard(postPage=${postCurrentPage - 1}, section='reports', type='post')}" th:if="${postCurrentPage > 0}" style="text-decoration: none; color: #4a3f35;">&lt; 이전</a>
+                        <span th:each="i : ${#numbers.sequence(0, postTotalPages - 1)}">
+                <a th:href="@{/admin/dashboard(postPage=${i}, section='reports', type='post')}" th:text="${i + 1}"
+                   th:style="${i == postCurrentPage ? 'font-weight:bold; color:#c33; text-decoration: underline;' : 'text-decoration: none; color: #4a3f35;'}"></a>
+            </span>
+                        <a th:href="@{/admin/dashboard(postPage=${postCurrentPage + 1}, section='reports', type='post')}" th:if="${postCurrentPage < postTotalPages - 1}" style="text-decoration: none; color: #4a3f35;">다음 &gt;</a>
+                    </div>
+                </div>
+
+                <div th:if="${type == 'comment'}">
+                    <h4 style="margin-bottom: 15px; color: #4a3f35;">💬 댓글 신고 내역</h4>
+                    <div th:each="cReport : ${commentReportList}" class="report-item">
+                        <div style="display: flex; justify-content: space-between;">
+                            <strong th:text="'댓글 신고 #' + ${cReport.reportId}"></strong>
+                            <span th:text="${cReport.status}" style="color: #c33; font-weight: bold;"></span>
+                        </div>
+                        <p th:text="'사유: ' + ${cReport.reason}" style="margin-top:0.75rem; color: #8a7e72;"></p>
+                        <form th:action="@{/admin/report/process}" method="post" style="margin-top: 1rem;">
+                            <input type="hidden" name="reportId" th:value="${cReport.reportId}">
+                            <input type="hidden" name="type" value="comment">
+                            <button name="action" value="APPROVE" style="padding:0.4rem 0.8rem; background:#4a3f35; color:white; border-radius:0.4rem; border:none; cursor:pointer;">승인(삭제)</button>
+                        </form>
+                    </div>
+
+                    <div th:if="${commentTotalPages > 0}" style="display: flex; justify-content: center; gap: 8px; margin-top: 25px;">
+                        <a th:href="@{/admin/dashboard(commentPage=${commentCurrentPage - 1}, section='reports', type='comment')}" th:if="${commentCurrentPage > 0}" style="text-decoration: none; color: #4a3f35;">&lt; 이전</a>
+                        <span th:each="i : ${#numbers.sequence(0, commentTotalPages - 1)}">
+                <a th:href="@{/admin/dashboard(commentPage=${i}, section='reports', type='comment')}" th:text="${i + 1}"
+                   th:style="${i == commentCurrentPage ? 'font-weight:bold; color:#c33; text-decoration: underline;' : 'text-decoration: none; color: #4a3f35;'}"></a>
+            </span>
+                        <a th:href="@{/admin/dashboard(commentPage=${commentCurrentPage + 1}, section='reports', type='comment')}" th:if="${commentCurrentPage < commentTotalPages - 1}" style="text-decoration: none; color: #4a3f35;">다음 &gt;</a>
                     </div>
                 </div>
             </section>
-
-            <!-- 금지어 목록 -->
             <section id="banned-section" class="content-section">
-                <h3 class="section-title">금지어 목록</h3>
-                <button class="btn-add" type="button">+ 금지어 추가</button>
-
-                <div th:each="i : ${#numbers.sequence(1, 10)}">
-                    <div class="word-item">
-                        <p class="word-text" th:text="'금지어 ' + ${i}">금지어 1</p>
-                        <button class="btn-delete" type="button">삭제</button>
+                <h3 class="admin-title">금지어 목록</h3>
+                <a th:href="@{/admin/register(type='word')}"
+                   style="display:inline-block; margin-bottom:1.5rem; color:#4a3f35; font-weight:bold;">
+                    + 금지어 추가
+                </a>
+                <div th:each="word : ${wordList}"
+                     class="word-item"
+                     style="display:flex; justify-content:space-between;">
+                    <span th:text="${word.word}"></span>
+                    <div>
+                        <a th:href="@{/admin/modify(type='word', id=${word.forbiddenwordId})}"
+                           style="margin-right:10px; color:#4a3f35;">수정</a>
+                        <a th:href="@{/admin/delete(type='word', id=${word.forbiddenwordId})}"
+                           onclick="return confirm('삭제')"
+                           style="color:#e74c3c;">삭제</a>
                     </div>
                 </div>
             </section>
 
-            <!-- 카테고리 목록 -->
             <section id="categories-section" class="content-section">
-                <h3 class="section-title">카테고리 목록</h3>
-                <button class="btn-add" type="button">+ 카테고리 추가</button>
-
-                <div th:each="category : ${'디자인,아트,사진,패션,인테리어,음식,여행,자연,운동,취미'.split(',')}">
-                    <div class="cat-item">
-                        <p class="cat-text" th:text="${category}">카테고리</p>
-                        <div class="category-actions">
-                            <button class="btn-edit" type="button">수정</button>
-                            <button class="btn-delete" type="button">삭제</button>
-                        </div>
+                <h3 class="admin-title">카테고리 목록</h3>
+                <a th:href="@{/admin/register(type='category')}"
+                   style="display:inline-block; margin-bottom:1.5rem; color:#4a3f35; font-weight:bold;">
+                    + 카테고리 추가
+                </a>
+                <div th:each="cat : ${categoryList}"
+                     class="cat-item"
+                     style="display:flex; justify-content:space-between;">
+                    <span th:text="${cat.categoryName}"></span>
+                    <div>
+                        <a th:href="@{/admin/modify(type='category', id=${cat.categoryId})}"
+                           style="margin-right:10px; color:#4a3f35;">수정</a>
+                        <a th:href="@{/admin/delete(type='category', id=${cat.categoryId})}"
+                           onclick="return confirm('삭제')"
+                           style="color:#e74c3c;">삭제</a>
                     </div>
                 </div>
             </section>
+
         </div>
     </div>
 </main>
 
-<!-- ✅ 필요 시 search modal/공통 스크립트도 붙이기 -->
-<div th:replace="~{layout/header :: searchModal}"></div>
-<script th:replace="~{layout/header :: commonScript}"></script>
+<!--<script th:inline="javascript">-->
+<!--    // 탭 전환 함수-->
+<!--    function showSection(sectionId, event) {-->
+<!--        // 모든 섹션 숨기기-->
+<!--        document.querySelectorAll('.content-section')-->
+<!--            .forEach(s => s.classList.remove('active'));-->
 
-<script th:src="@{/js/main.js}"></script>
+<!--        // 선택한 섹션만 보이기-->
+<!--        const targetSection = document.getElementById(sectionId + '-section');-->
+<!--        if (targetSection) {-->
+<!--            targetSection.classList.add('active');-->
+<!--        }-->
 
-<script>
-    // 섹션 전환
+<!--        // 모든 버튼 비활성화-->
+<!--        document.querySelectorAll('.admin-menu-item')-->
+<!--            .forEach(item => item.classList.remove('active'));-->
+
+<!--        // 클릭된 버튼만 활성화-->
+<!--        if(event && event.currentTarget) {-->
+<!--            event.currentTarget.classList.add('active');-->
+<!--        }-->
+<!--    }-->
+
+<!--    // 페이지 로드 시 실행-->
+<!--    window.onload = function() {-->
+<!--        // 1. [추가] 중복 오류 메시지 알림 처리-->
+<!--        const errorMsg = [[${error}]];-->
+<!--        if (errorMsg) {-->
+<!--            alert(errorMsg); // "이미 존재하는 카테고리입니다" 등의 메시지 출력-->
+<!--        }-->
+
+<!--        // 2. [추가] 일반 처리 완료 메시지 (선택 사항)-->
+<!--        const result = [[${result}]];-->
+<!--        if (result === 'success') {-->
+<!--            alert("정상적으로 등록되었습니다.");-->
+<!--        }-->
+
+<!--        // 3. 기존 탭 유지 로직-->
+<!--        const urlParams = new URLSearchParams(window.location.search);-->
+<!--        const section = urlParams.get('section');-->
+
+<!--        if (section) {-->
+<!--            showSection(section);-->
+
+<!--            document.querySelectorAll('.admin-menu-item').forEach(btn => {-->
+<!--                const onclickAttr = btn.getAttribute('onclick');-->
+<!--                if (onclickAttr && onclickAttr.includes("'" + section + "'")) {-->
+<!--                    btn.classList.add('active');-->
+<!--                } else {-->
+<!--                    btn.classList.remove('active');-->
+<!--                }-->
+<!--            });-->
+<!--        }-->
+<!--    };-->
+<!--</script>-->
+
+<script th:inline="javascript">
     function showSection(sectionId, event) {
-        // 모든 섹션 숨기기
-        document.querySelectorAll('.content-section').forEach(section => {
-            section.classList.remove('active');
+        // 1. 모든 섹션 숨기기
+        document.querySelectorAll('.content-section').forEach(s => {
+            s.classList.remove('active');
+            s.style.display = 'none'; // 확실하게 숨김
         });
 
-        // 모든 메뉴 아이템 비활성화
-        document.querySelectorAll('.admin-menu-item').forEach(item => {
-            item.classList.remove('active');
-        });
+        // 2. 선택한 섹션만 보이기
+        const targetSection = document.getElementById(sectionId + '-section');
+        if (targetSection) {
+            targetSection.classList.add('active');
+            targetSection.style.display = 'block'; // 확실하게 표시
+        }
 
-        // 선택된 섹션 표시
-        const target = document.getElementById(sectionId + '-section');
-        if (target) target.classList.add('active');
+        // 3. 버튼 활성화 상태 변경
+        document.querySelectorAll('.admin-menu-item').forEach(item => item.classList.remove('active'));
 
-        // 클릭된 메뉴 아이템 활성화
-        if (event && event.currentTarget) {
+        // 클릭 이벤트가 있으면 해당 버튼 활성화, 없으면 ID로 찾아서 활성화
+        if(event && event.currentTarget) {
             event.currentTarget.classList.add('active');
+        } else {
+            const buttons = document.querySelectorAll('.admin-menu-item');
+            buttons.forEach(btn => {
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes("'" + sectionId + "'")) {
+                    btn.classList.add('active');
+                }
+            });
         }
     }
-</script>
 
+    window.onload = function() {
+        // [순서 중요!] 1. 섹션을 먼저 화면에 그립니다.
+        const urlParams = new URLSearchParams(window.location.search);
+        const section = urlParams.get('section') || 'users';
+        showSection(section);
+
+        // [순서 중요!] 2. 섹션이 보이고 난 뒤에 알림창을 띄웁니다.
+        const errorMsg = [[${error}]];
+        if (errorMsg) {
+            // setTimeout을 써서 브라우저가 화면을 그릴 시간을 줍니다.
+            setTimeout(() => {
+                alert(errorMsg);
+            }, 100);
+        }
+
+        const result = [[${result}]];
+        if (result === 'success') {
+            setTimeout(() => {
+                alert("정상적으로 처리되었습니다.");
+            }, 100);
+        }
+    };
+</script>
 </body>
 </html>

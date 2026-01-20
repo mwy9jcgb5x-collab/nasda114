@@ -1,6 +1,8 @@
 package com.example.nasda.repository;
 
 import com.example.nasda.domain.CommentEntity;
+import com.example.nasda.domain.CommentReportEntity;
+import com.example.nasda.domain.ReportStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +13,7 @@ import java.util.List;
 public interface CommentRepository extends JpaRepository<CommentEntity, Integer> {
 
     // ✅ 최신 댓글이 위로 오게(created_at DESC)
+
     Page<CommentEntity> findByPost_PostIdOrderByCreatedAtDesc(Integer postId, Pageable pageable);
     Page<CommentEntity> findByUserId(Integer userId, Pageable pageable);
 
@@ -22,4 +25,5 @@ public interface CommentRepository extends JpaRepository<CommentEntity, Integer>
     long countByUserId(Integer userId);
 
     long countByPost_PostIdAndCreatedAtBefore(Integer postId, LocalDateTime createdAt);
+
 }

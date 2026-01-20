@@ -36,4 +36,9 @@ public interface PostDecorationRepository extends JpaRepository<PostDecorationEn
     @Modifying
     @Transactional
     void deleteByPostImageImageId(Integer imageId);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE PostDecorationEntity d SET d.posX = :posX, d.posY = :posY WHERE d.decorationId = :id")
+    void updatePosition(@Param("id") Integer id, @Param("posX") float posX, @Param("posY") float posY);
 }

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <th:block th:replace="~{layout/header :: head}"></th:block>
+  <style>
+    /* 컨테이너: 한 화면에 들어오는 콤팩트한 사이즈 */
+    .admin-container {
+      max-width: 550px;
+      margin: 3rem auto;
+      padding: 2.5rem;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #eee1d5;
+      box-shadow: 0 10px 25px rgba(74, 63, 53, 0.05);
+    }
+
+    /* 헤더: 간결하게 수정 */
+    .admin-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #fdfaf7;
+      padding-bottom: 1rem;
+    }
+
+    .admin-title {
+      font-size: 1.5rem;
+      color: #4a3f35;
+      font-weight: 700;
+    }
+
+    /* 폼 그룹: 세로 정렬이되 너무 길지 않게 간격 조절 */
+    .form-group {
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-label {
+      font-weight: 700;
+      color: #8a7e72;
+      font-size: 0.9rem;
+    }
+
+    .form-input {
+      padding: 1rem;
+      border: 1px solid #eee1d5;
+      border-radius: 8px;
+      background: #fdfaf7;
+      font-size: 1rem;
+    }
+
+    .form-input[readonly] {
+      background: #f5f5f5;
+      color: #aaa;
+    }
+
+    /* 버튼 영역: 버튼들을 세로로 쌓음 */
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      margin-top: 1.5rem;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 1.1rem;
+      background: #4a3f35;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-delete {
+      width: 100%;
+      padding: 1rem;
+      background: #fff;
+      color: #e74c3c;
+      border: 1px solid #e74c3c;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-back {
+      text-align: center;
+      color: #a68966;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+<div th:replace="~{layout/header :: header}"></div>
+
+<main class="admin-container">
+  <header class="admin-header">
+    <h2 class="admin-title">🛠 정보 수정 관리</h2>
+  </header>
+
+  <form th:action="@{/admin/modify}" method="post">
+
+    <input type="hidden" name="type" th:value="${type}">
+
+    <div th:if="${type == 'word'}">
+      <input type="hidden" name="forbiddenwordId" id="word-id" th:value="${dto.forbiddenwordId}">
+
+      <div class="form-group">
+        <label class="form-label">금지어 번호 (ID)</label>
+        <input type="text" class="form-input" th:value="${dto.forbiddenwordId}" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">단어 내용</label>
+        <input type="text" name="word" class="form-input" th:value="${dto.word}" required>
+      </div>
+    </div>
+
+    <div th:if="${type == 'category'}">
+      <input type="hidden" name="categoryId" id="category-id" th:value="${dto.categoryId}">
+
+      <div class="form-group">
+        <label class="form-label">카테고리 번호 (ID)</label>
+        <input type="text" class="form-input" th:value="${dto.categoryId}" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">카테고리 명칭</label>
+        <input type="text" name="categoryName" class="form-input" th:value="${dto.categoryName}" required>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button type="submit" class="btn-submit">변경사항 저장</button>
+      <button type="button" class="btn-delete" onclick="handleDelete()">데이터 삭제</button>
+      <a th:href="@{/admin/dashboard}" class="btn-back">수정 취소하고 돌아가기</a>
+    </div>
+  </form>
+</main>
+
+<script th:inline="javascript">
+  function handleDelete() {
+    const type = [[${type}]];
+    let targetId = null;
+
+    // ✅ DTO 필드명에 맞춰서 정확한 태그의 값을 가져옵니다.
+    if (type === 'word') {
+      targetId = document.getElementById('word-id').value;
+    } else if (type === 'category') {
+      targetId = document.getElementById('category-id').value;
+    }
+
+    console.log("삭제 요청 정보 -> 타입:", type, " / ID:", targetId);
+
+    if (!targetId || targetId === "null") {
+      alert("ID 값을 찾을 수 없습니다. 페이지를 새로고침 해주세요.");
+      return;
+    }
+
+    if (confirm("정말로 삭제하시겠습니까?")) {
+      // ✅ 서버 AdminController의 @RequestParam("id")와 매칭
+      location.href = "/admin/delete?type=" + type + "&id=" + targetId;
+    }
+  }
+</script>
+</body>
+</html>

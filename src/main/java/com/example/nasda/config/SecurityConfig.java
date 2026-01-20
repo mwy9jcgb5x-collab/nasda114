@@ -21,7 +21,8 @@ public class SecurityConfig {
                 // SecurityConfig.java 예시
                 .authorizeHttpRequests(auth -> auth
                         //관리자 주소
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
+//                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/**").permitAll()
                         // 1. 유저 관련 모든 경로 (/user/login, /user/signup, /user/mypage 등) 허용
                         .requestMatchers("/", "/user/**").permitAll()
                         // 2. 게시글 관련 모든 경로 (/posts/create, /posts/view 등) 허용
