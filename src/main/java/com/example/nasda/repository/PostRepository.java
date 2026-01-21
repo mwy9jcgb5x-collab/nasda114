@@ -1,17 +1,20 @@
 package com.example.nasda.repository;
 
 import com.example.nasda.domain.PostEntity;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import com.example.nasda.domain.PostImageEntity;
 
 import java.util.List;
 
 public interface PostRepository extends JpaRepository<PostEntity, Integer> {
+
+    // ✅ 캘린더 이미지 조회를 위해 추가된 메서드
+    List<PostEntity> findAllByUser_UserId(Integer userId);
 
     long countByUser_UserId(Integer userId);
 
@@ -40,7 +43,7 @@ public interface PostRepository extends JpaRepository<PostEntity, Integer> {
     List<PostEntity> findAllWithUserAndCategoryOrderByCreatedAtDesc();
 
     // =========================
-    // ✅ [추가] 검색 기능용
+    // ✅ 검색 기능용
     // =========================
     List<PostEntity> findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(String keyword);
 
@@ -51,6 +54,12 @@ public interface PostRepository extends JpaRepository<PostEntity, Integer> {
     List<PostEntity> findByCategory_CategoryNameContainingIgnoreCaseOrderByCreatedAtDesc(String keyword);
 
     Page<PostEntity> findByUser_UserId(Integer userId, Pageable pageable);
+
+    // ✅ 61행 수정 완료: p.user.id가 아니라 p.user.userId여야 합니다.
+    @Modifying
+    @Transactional
+    @Query("UPDATE PostEntity p SET p.user = NULL WHERE p.user.userId = :userId")
+    void setAuthorNull(@Param("userId") Integer userId);
 
     @Modifying
     @Query("delete from PostImageEntity pi where pi.post.category.categoryId = :categoryId")
@@ -65,6 +74,7 @@ public interface PostRepository extends JpaRepository<PostEntity, Integer> {
     where lower(p.title) like lower(concat('%', :keyword, '%'))
        or lower(p.description) like lower(concat('%', :keyword, '%'))
     order by p.createdAt desc
-""")
+    """)
     List<PostEntity> searchTitleOrDescription(@Param("keyword") String keyword);
+
 }

@@ -1,6 +1,10 @@
 package com.example.nasda.service;
 
-import com.example.nasda.domain.*;
+import com.example.nasda.domain.CategoryEntity;
+import com.example.nasda.domain.PostEntity;
+import com.example.nasda.domain.PostImageEntity;
+import com.example.nasda.domain.UserEntity;
+import com.example.nasda.domain.UserRepository;
 import com.example.nasda.dto.post.HomePostDto;
 import com.example.nasda.dto.post.PostViewDto;
 import com.example.nasda.repository.CategoryRepository;
@@ -148,6 +152,8 @@ public class PostService {
                     List<String> images = getImageUrls(post.getPostId());
                     List<PostViewDto.ImageDto> imageItems = getImageItems(post.getPostId());
 
+                    String nickname = (post.getUser() != null) ? post.getUser().getNickname() : "(알 수 없음)";
+
                     return new PostViewDto(
                             post.getPostId(),
                             post.getTitle(),
@@ -198,7 +204,7 @@ public class PostService {
             case "title" -> postRepository.findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(q);
             case "author" -> postRepository.findByUser_NicknameContainingIgnoreCaseOrderByCreatedAtDesc(q);
             case "category" -> postRepository.findByCategory_CategoryNameContainingIgnoreCaseOrderByCreatedAtDesc(q);
-            default -> postRepository.searchTitleOrDescription(q); // ✅ content
+            default -> postRepository.findByDescriptionContainingIgnoreCaseOrderByCreatedAtDesc(q);
         };
 
         return results.stream()

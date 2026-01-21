@@ -4,18 +4,21 @@ import com.example.nasda.domain.CategoryEntity;
 import com.example.nasda.domain.PostEntity;
 import com.example.nasda.dto.post.PostCreateRequestDto;
 import com.example.nasda.dto.post.PostViewDto;
-import com.example.nasda.service.*;
+import com.example.nasda.service.AuthUserService;
+import com.example.nasda.service.CategoryService;
+import com.example.nasda.service.CommentService;
+import com.example.nasda.service.PostImageService;
+import com.example.nasda.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -55,33 +58,49 @@ public class PostController {
             if ("create".equals(postIdStr)) return "redirect:/posts/create";
 
             Integer postId = Integer.parseInt(postIdStr);
-
             PostEntity entity = postService.get(postId);
 
+            // 1. 로그인 유저 및 본인 확인 로직 (작성자가 null일 경우 대비)
             Integer currentUserId = authUserService.getCurrentUserIdOrNull();
             boolean isOwner = currentUserId != null
                     && entity.getUser() != null
                     && currentUserId.equals(entity.getUser().getUserId());
 
+            // 2. 이미지 정보 가져오기
             List<String> imageUrls = postImageService.getImageUrls(postId);
-
-            // ✅ 추가: id+url 객체 리스트 (꾸미기/확장용)
             List<PostViewDto.ImageDto> imageItems = postService.getImageItems(postId);
 
+            // ✅ 3. 작성자(Author) 정보 안전하게 생성 (Null 처리 핵심)
+            PostViewDto.AuthorDto authorDto;
+            if (entity.getUser() != null) {
+                authorDto = new PostViewDto.AuthorDto(entity.getUser().getNickname());
+            } else {
+                // 작성자가 탈퇴하여 null인 경우 처리
+                authorDto = new PostViewDto.AuthorDto("(알 수 없음)");
+            }
+
+            // 4. 카테고리 이름 안전하게 처리
+            String categoryName = (entity.getCategory() != null)
+                    ? entity.getCategory().getCategoryName()
+                    : "미분류";
+
+            // 5. 화면에 전달할 DTO 조립
             PostViewDto post = new PostViewDto(
                     entity.getPostId(),
                     entity.getTitle(),
-                    entity.getDescription(), // content로 사용
-                    entity.getCategory().getCategoryName(),
-                    new PostViewDto.AuthorDto(entity.getUser().getNickname()),
+                    entity.getDescription() != null ? entity.getDescription() : "",
+                    categoryName,
+                    authorDto,
                     imageUrls,
                     imageItems,
                     entity.getCreatedAt(),
                     isOwner
             );
 
+            // 6. 댓글 페이지 처리
             var commentsPage = commentService.getCommentsPage(postId, page, size, currentUserId);
 
+            // 7. 모델에 데이터 담기
             model.addAttribute("post", post);
             model.addAttribute("comments", commentsPage.getContent());
             model.addAttribute("commentsPage", commentsPage);
@@ -94,7 +113,6 @@ public class PostController {
             return "redirect:/";
         }
     }
-
     @PostMapping("/posts")
     public String createPost(
             @RequestParam String title,
@@ -130,6 +148,45 @@ public class PostController {
         model.addAttribute("username", nickname == null ? "게스트" : nickname);
 
         return "post/edit";
+    }
+    @GetMapping("/api/posts/my/calendar")
+    @ResponseBody
+    public List<Map<String, Object>> getMyPostsForCalendar() {
+        Integer userId = authUserService.getCurrentUserIdOrNull();
+        if (userId == null) return List.of();
+
+        List<PostEntity> myPosts = postService.findByUserId(userId);
+
+        return myPosts.stream().map(post -> {
+            Map<String, Object> event = new HashMap<>();
+            event.put("id", post.getPostId());
+            event.put("title", post.getTitle()); // 👈 [수정 1] 제목이 있어야 렌더링이 안정적입니다.
+            event.put("start", post.getCreatedAt());
+            event.put("url", "/posts/" + post.getPostId());
+
+            String imageUrl = postImageService.getImageUrls(post.getPostId()).stream()
+                    .findFirst().orElse(null);
+
+            // 👈 [수정 2] 경로 앞에 /가 중복되지 않게 검사 후 처리
+            if (imageUrl != null && !imageUrl.startsWith("/")) {
+                imageUrl = "/" + imageUrl;
+            }
+
+            // JavaScript에서 arg.event.extendedProps.image 로 접근 가능하게 설정
+            Map<String, Object> props = new HashMap<>();
+            props.put("image", imageUrl);
+            event.put("extendedProps", props);
+
+            return event;
+        }).toList();
+    }
+    // PostController.java에 추가
+    @GetMapping("/posts/calendar")
+    public String myCalendarPage(Model model) {
+        String nickname = authUserService.getCurrentNicknameOrNull();
+        model.addAttribute("username", nickname == null ? "게스트" : nickname);
+        // post 정보는 API가 가져오므로 여기서는 페이지 이름만 리턴
+        return "post/my-calendar";
     }
 
     @PostMapping("/posts/{id}/edit")
@@ -178,4 +235,6 @@ public class PostController {
 
         return "post/my-list";
     }
+
+
 }
