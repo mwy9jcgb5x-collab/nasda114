@@ -887,7 +887,20 @@ body {
 /* 반응형: 화면 좁아지면 자동으로 컬럼 수 감소 */
 @media (max-width: 1400px){ .page-home #masonryGrid{ column-width: 320px; } }
 @media (max-width: 900px) { .page-home #masonryGrid{ column-width: 300px; } }
-@media (max-width: 520px) { .page-home #masonryGrid{ column-width: 100%; } }
+/* ✅ 모바일도 2열 유지해서 '한 장이 화면 꽉' 방지 */
+@media (max-width: 520px){
+    .page-home #masonryGrid{
+        column-count: 2;
+        column-width: auto; /* column-width 100% 무효화 */
+        column-gap: 12px;
+        padding: 12px;
+    }
+}
+
+/* 너무 작은 폰만 1열 */
+@media (max-width: 360px){
+    .page-home #masonryGrid{ column-count: 1; }
+}
 
 /* ✅ columns 안에서 block이면 가끔 폭이 커지는 경우가 있어서 inline-block을 강제 */
 .page-home #masonryGrid > a.home-card{
