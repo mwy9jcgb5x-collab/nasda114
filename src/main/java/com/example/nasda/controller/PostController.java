@@ -74,10 +74,12 @@ public class PostController {
             // ✅ 3. 작성자(Author) 정보 안전하게 생성 (Null 처리 핵심)
             PostViewDto.AuthorDto authorDto;
             if (entity.getUser() != null) {
-                authorDto = new PostViewDto.AuthorDto(entity.getUser().getNickname());
+//                authorDto = new PostViewDto.AuthorDto(entity.getUser().getNickname());
+                authorDto = new PostViewDto.AuthorDto(entity.getUser().getNickname(), entity.getUser().getUserId(), entity.getUser().getLoginId());
             } else {
                 // 작성자가 탈퇴하여 null인 경우 처리
-                authorDto = new PostViewDto.AuthorDto("(알 수 없음)");
+//                authorDto = new PostViewDto.AuthorDto("(알 수 없음)");
+                authorDto = new PostViewDto.AuthorDto("(알 수 없음)", null, "");
             }
 
             // 4. 카테고리 이름 안전하게 처리

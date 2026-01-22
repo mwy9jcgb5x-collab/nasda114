@@ -362,14 +362,13 @@
 
 <!-- page inline data -->
 <script th:inline="javascript">
-    /*<![CDATA[*/
     window.ST_DATA = {
         postId: [[${post.id}]],
-        currentUserId: 1 /* TODO: 실제 로그인 유저ID로 교체 */
+        currentUserId: [[${session.loginUser.loginId}]],
+        currentUserNickname: [[${session.loginUser.nickname}]],
+        rawUserId: [[${session.loginUser.userId}]],
+        postOwnerId: [[${post.author.loginId}]]
     };
-    window.postId = [[${post.id}]];
-    window.currentUserId = 1;
-    /*]]>*/
 </script>
 
 <script th:src="@{/js/sticker.js}"></script>
