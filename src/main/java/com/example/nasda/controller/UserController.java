@@ -19,6 +19,7 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
@@ -169,6 +170,60 @@ public class UserController {
         }
 
         return "redirect:/user/mypage";
+    }
+
+    // 비밀번호 변경 처리
+    @PostMapping("/mypage/change-password")
+    public String changePassword(@RequestParam String currentPassword,
+                                 @RequestParam String newPassword,
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
+        UserEntity loginUser = (UserEntity) session.getAttribute("loginUser");
+        try {
+            userService.updatePassword(loginUser.getUserId(), currentPassword, newPassword);
+            redirectAttributes.addFlashAttribute("message", "비밀번호가 변경되었습니다.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/user/mypage";
+    }
+
+    @PostMapping("/mypage/delete")
+    public String deleteUser(@RequestParam String password,
+                             HttpSession session,
+                             HttpServletRequest request,
+                             HttpServletResponse response,
+                             RedirectAttributes redirectAttributes) {
+        UserEntity loginUser = (UserEntity) session.getAttribute("loginUser");
+
+        try {
+            // ✅ 수정: withdraw 대신 실제 로직이 있는 deleteUser를 호출합니다.
+            // deleteUser는 내부에서 비밀번호 검증 + 관계 끊기 + 삭제를 모두 수행합니다.
+            boolean success = userService.deleteUser(loginUser.getUserId(), password);
+
+            if (success) {
+                // 로그아웃 및 세션 무효화
+                new SecurityContextLogoutHandler().logout(request, response, SecurityContextHolder.getContext().getAuthentication());
+                session.invalidate();
+                redirectAttributes.addFlashAttribute("message", "탈퇴가 완료되었습니다.");
+                return "redirect:/";
+            } else {
+                // 비밀번호가 틀린 경우 (deleteUser가 false를 반환할 때)
+                redirectAttributes.addFlashAttribute("errorMessage", "비밀번호가 일치하지 않습니다.");
+                return "redirect:/user/mypage?tab=account";
+            }
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/user/mypage?tab=account";
+        }
+    }
+
+    @GetMapping("/check-nickname")
+    @ResponseBody
+    public boolean checkNickname(@RequestParam String nickname) {
+        // UserService의 중복 확인 메서드 호출
+        return userService.isNicknameDuplicate(nickname);
     }
 
     @PostMapping("/signup")

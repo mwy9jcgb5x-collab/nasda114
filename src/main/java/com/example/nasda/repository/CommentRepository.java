@@ -24,9 +24,9 @@ public interface CommentRepository extends JpaRepository<CommentEntity, Integer>
     // ✅ 2. 유저별 댓글 목록 조회
     Page<CommentEntity> findByUserId(Integer userId, Pageable pageable);
 
-    // ✅ 3. 회원 탈퇴용: 작성자를 NULL로 변경 (Native Query)
+    // CommentRepository.java 수정
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Transactional
-    @Query(value = "UPDATE comments SET user_id = NULL WHERE user_id = :userId", nativeQuery = true)
+    @Query(value = "UPDATE comments SET user_id = 0 WHERE user_id = :userId", nativeQuery = true) // NULL 대신 0
     void setAuthorNull(@Param("userId") Integer userId);
 }

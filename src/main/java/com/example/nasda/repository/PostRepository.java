@@ -58,7 +58,8 @@ public interface PostRepository extends JpaRepository<PostEntity, Integer> {
     // ✅ 61행 수정 완료: p.user.id가 아니라 p.user.userId여야 합니다.
     @Modifying
     @Transactional
-    @Query("UPDATE PostEntity p SET p.user = NULL WHERE p.user.userId = :userId")
+// p.user = NULL 대신 p.user.userId = 0으로 수정
+    @Query("UPDATE PostEntity p SET p.user.userId = 0 WHERE p.user.userId = :userId")
     void setAuthorNull(@Param("userId") Integer userId);
 
     @Modifying

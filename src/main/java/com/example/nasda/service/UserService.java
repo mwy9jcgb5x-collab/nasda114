@@ -65,10 +65,12 @@ public class UserService {
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
+        // ✅ 닉네임만 수정하도록 변경 (이메일 수정 방지)
         user.setNickname(nickname);
-        user.setEmail(email);
 
-        return user; // Dirty Checking으로 자동 저장됨
+        // user.setEmail(email); // 이 줄을 삭제하거나 주석 처리하여 수정을 막습니다.
+
+        return user; // Dirty Checking으로 nickname만 업데이트됨
     }
 
     /**
@@ -195,20 +197,6 @@ public class UserService {
      * 새 비밀번호 업데이트 (문제 1번 해결용)
      */
     @Transactional
-    public void updatePassword(Integer userId, String newPassword) {
-        // 1. 유저 존재 확인
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        // 2. 작성한 글과 댓글의 user_id를 DB에서 직접 null로 업데이트
-        postRepository.setAuthorNull(userId);
-        commentRepository.setAuthorNull(userId);
-
-        // 3. 이제 외래 키 제약 조건이 풀렸으므로 유저 삭제 가능
-        userRepository.delete(user);
-    }
-
-    @Transactional
     public boolean deleteUser(Integer userId, String rawPassword) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -226,5 +214,22 @@ public class UserService {
         // ✅ 3. 유저 삭제
         userRepository.delete(user);
         return true;
+    }
+
+    @Transactional
+    public void updatePassword(Integer userId, String currentPassword, String newPassword) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        // 1. 현재 비밀번호 일치 여부 확인
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new RuntimeException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        // 2. 새 비밀번호 암호화 후 저장
+        user.setPassword(passwordEncoder.encode(newPassword));
+    }
+
+    public void withdraw(Integer userId, String password) {
     }
 }
