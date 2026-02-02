@@ -4,49 +4,60 @@
 
 <body class="min-h-screen bg-white">
 <div th:replace="~{layout/header :: header}"></div>
+<div th:replace="~{layout/header :: searchModal}"></div>
+<script th:replace="~{layout/header :: commonScript}"></script>
 
 <main class="create-page">
     <div class="create-container">
-        <h2>새 게시물 등록</h2>
+        <div class="create-head">
+            <h2 class="create-title">새 게시물 등록</h2>
+            <p class="create-sub">나만의 스티커 다이어리에 영감을 저장해보세요 ✨</p>
+        </div>
 
-        <form th:action="@{/posts}" method="post" enctype="multipart/form-data" id="createForm">
-            <div class="form-group">
-                <label for="title">제목 *</label>
-                <input type="text" id="title" name="title" required maxlength="200"
-                       placeholder="제목을 입력하세요"
-                       th:value="${postCreateRequestDto != null ? postCreateRequestDto.title() : ''}">
-            </div>
+        <form th:action="@{/posts}" method="post" enctype="multipart/form-data" id="createForm" class="create-form">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="title">제목 <span class="req">*</span></label>
+                    <input type="text" id="title" name="title" required maxlength="200"
+                           placeholder="제목을 입력하세요"
+                           th:value="${postCreateRequestDto != null ? postCreateRequestDto.title() : ''}">
+                </div>
 
-            <div class="form-group">
-                <label for="category">카테고리 *</label>
-                <select id="category" name="category" required>
-                    <option value="">선택하세요</option>
-
-                    <option th:each="c : ${categories}"
-                            th:value="${c.categoryName}"
-                            th:text="${c.categoryName}">
-                        카테고리
-                    </option>
-                </select>
+                <div class="form-group">
+                    <label for="category">카테고리 <span class="req">*</span></label>
+                    <select id="category" name="category" required>
+                        <option value="">선택하세요</option>
+                        <option th:each="c : ${categories}"
+                                th:value="${c.categoryName}"
+                                th:text="${c.categoryName}">
+                            카테고리
+                        </option>
+                    </select>
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="description">설명</label>
-                <textarea id="description" name="description" rows="6"
+                <textarea id="description" name="description" rows="8"
                           placeholder="내용을 입력하세요"
                           th:text="${postCreateRequestDto != null ? postCreateRequestDto.description() : ''}"></textarea>
             </div>
 
             <!-- ✅ 이미지 업로드 -->
             <div class="form-group">
-                <label for="images">이미지 *</label>
-                <input type="file" id="images" name="images" accept="image/*"
-                       multiple required onchange="previewImages(event)">
-                <p class="help-text">최대 10MB, 여러 장 선택 가능</p>
-            </div>
+                <label for="images">이미지 <span class="req">*</span></label>
 
-            <!-- ✅ 이미지 미리보기 -->
-            <div id="imagePreview" class="image-preview"></div>
+                <div class="file-box">
+                    <input class="file-input" type="file" id="images" name="images" accept="image/*"
+                           multiple required onchange="previewImages(event)">
+                    <div class="file-hint">
+                        <div class="file-hint-title">파일 선택</div>
+                        <div class="file-hint-sub">최대 10MB · 여러 장 선택 가능</div>
+                    </div>
+                </div>
+
+                <div id="imagePreview" class="image-preview"></div>
+            </div>
 
             <div class="form-actions">
                 <button type="button" onclick="history.back()" class="btn-cancel">취소</button>

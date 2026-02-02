@@ -94,6 +94,16 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
+    public Page<ForbiddenWordDTO> searchBannedWords(String keyword, Pageable pageable) {
+        log.info("금지어 검색 중... 키워드: " + keyword);
+        return wordRepository.findByWordContaining(keyword, pageable)
+                .map(e -> ForbiddenWordDTO.builder()
+                        .forbiddenwordId(e.getWordId()) // DTO 필드명: forbiddenwordId, Entity 필드명: wordId
+                        .word(e.getWord())
+                        .build());
+    }
+
+    @Override
     public List<ForbiddenWordDTO> getAllWords() {
         return wordRepository.findAll().stream()
                 .map(e -> ForbiddenWordDTO.builder()
@@ -134,6 +144,14 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Page<CategoryDTO> getCategories(Pageable pageable) {
         return categoryRepository.findAll(pageable)
+                .map(e -> modelMapper.map(e, CategoryDTO.class));
+    }
+
+    // ✨ [추가] 카테고리 검색 로직 (컨트롤러 에러 해결 핵심)
+    @Override
+    public Page<CategoryDTO> searchCategories(String keyword, Pageable pageable) {
+        log.info("카테고리 검색 중... 키워드: " + keyword);
+        return categoryRepository.findByCategoryNameContaining(keyword, pageable)
                 .map(e -> modelMapper.map(e, CategoryDTO.class));
     }
 

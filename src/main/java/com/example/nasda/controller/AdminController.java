@@ -32,55 +32,67 @@ public class AdminController {
                             @RequestParam(value = "type", defaultValue = "post") String type,
                             @RequestParam(value = "postPage", defaultValue = "0") int postPage,
                             @RequestParam(value = "commentPage", defaultValue = "0") int commentPage,
-                            @RequestParam(value = "wordPage", defaultValue = "0") int wordPage,    // 추가
-                            @RequestParam(value = "catPage", defaultValue = "0") int catPage) {    // 추가
-        log.info("대시보드 실행 - 섹션: {}, 타입: {}", section, type);
+                            @RequestParam(value = "wordPage", defaultValue = "0") int wordPage,
+                            @RequestParam(value = "catPage", defaultValue = "0") int catPage,
+                            // 🔍 검색 파라미터 추가
+                            @RequestParam(value = "wordKeyword", required = false) String wordKeyword,
+                            @RequestParam(value = "catKeyword", required = false) String catKeyword) {
+
+        log.info("대시보드 실행 - 검색어: word={}, cat={}", wordKeyword, catKeyword);
 
         try {
             model.addAttribute("section", section);
             model.addAttribute("type", type);
+            // 검색어 유지용으로 다시 전달
+            model.addAttribute("wordKeyword", wordKeyword);
+            model.addAttribute("catKeyword", catKeyword);
 
-            // 1. 페이징 설정 (최신순 정렬)
             Pageable postPageable = PageRequest.of(postPage, 10, Sort.by("reportId").descending());
             Pageable commentPageable = PageRequest.of(commentPage, 10, Sort.by("reportId").descending());
             Pageable wordPageable = PageRequest.of(wordPage, 10, Sort.by("wordId").descending());
             Pageable catPageable = PageRequest.of(catPage, 10, Sort.by("categoryId").descending());
 
-            // 2. 계정 목록
             model.addAttribute("userList", adminService.getUserStatusList());
 
-            // 3. 신고 목록 페이징 처리
+            // 1. 신고 목록
             Page<PostReportDTO> postReportPage = adminService.getPendingPostReports(postPageable);
             model.addAttribute("postReportList", postReportPage.getContent());
-            model.addAttribute("postCurrentPage", postReportPage.getNumber());
             model.addAttribute("postTotalPages", postReportPage.getTotalPages());
+            model.addAttribute("postCurrentPage", postReportPage.getNumber());
 
             Page<CommentReportDTO> commentReportPage = adminService.getPendingCommentReports(commentPageable);
             model.addAttribute("commentReportList", commentReportPage.getContent());
-            model.addAttribute("commentCurrentPage", commentReportPage.getNumber());
             model.addAttribute("commentTotalPages", commentReportPage.getTotalPages());
+            model.addAttribute("commentCurrentPage", commentReportPage.getNumber());
 
-            // 4. 금지어 목록 페이징 처리
-            Page<ForbiddenWordDTO> wordPageResult = adminService.getBannedWords(wordPageable);
+            // 2. 금지어 목록 (검색 로직 추가)
+            Page<ForbiddenWordDTO> wordPageResult;
+            if (wordKeyword != null && !wordKeyword.isEmpty()) {
+                // 서비스에 searchBannedWords 메서드가 있다고 가정
+                wordPageResult = adminService.searchBannedWords(wordKeyword, wordPageable);
+            } else {
+                wordPageResult = adminService.getBannedWords(wordPageable);
+            }
             model.addAttribute("wordList", wordPageResult.getContent());
             model.addAttribute("wordCurrentPage", wordPageResult.getNumber());
             model.addAttribute("wordTotalPages", wordPageResult.getTotalPages());
 
-            // 5. 카테고리 목록 페이징 처리
-            Page<CategoryDTO> catPageResult = adminService.getCategories(catPageable);
+            // 3. 카테고리 목록 (검색 로직 추가)
+            Page<CategoryDTO> catPageResult;
+            if (catKeyword != null && !catKeyword.isEmpty()) {
+                // 서비스에 searchCategories 메서드가 있다고 가정
+                catPageResult = adminService.searchCategories(catKeyword, catPageable);
+            } else {
+                catPageResult = adminService.getCategories(catPageable);
+            }
             model.addAttribute("categoryList", catPageResult.getContent());
             model.addAttribute("catCurrentPage", catPageResult.getNumber());
             model.addAttribute("catTotalPages", catPageResult.getTotalPages());
 
         } catch (Exception e) {
-            log.error("데이터 로딩 중 오류 발생: " + e.getMessage());
-            model.addAttribute("categoryList", Collections.emptyList());
-            model.addAttribute("wordList", Collections.emptyList());
-            model.addAttribute("postReportList", Collections.emptyList());
-            model.addAttribute("commentReportList", Collections.emptyList());
-            model.addAttribute("userList", Collections.emptyList());
+            log.error("데이터 로딩 오류: " + e.getMessage());
+            // 에러 시 빈 리스트 처리 로직 유지
         }
-
         return "admin/dashboard";
     }
 

@@ -109,10 +109,6 @@
       <input type="hidden" name="forbiddenwordId" id="word-id" th:value="${dto.forbiddenwordId}">
 
       <div class="form-group">
-        <label class="form-label">금지어 번호 (ID)</label>
-        <input type="text" class="form-input" th:value="${dto.forbiddenwordId}" readonly>
-      </div>
-      <div class="form-group">
         <label class="form-label">단어 내용</label>
         <input type="text" name="word" class="form-input" th:value="${dto.word}" required>
       </div>
@@ -122,10 +118,6 @@
       <input type="hidden" name="categoryId" id="category-id" th:value="${dto.categoryId}">
 
       <div class="form-group">
-        <label class="form-label">카테고리 번호 (ID)</label>
-        <input type="text" class="form-input" th:value="${dto.categoryId}" readonly>
-      </div>
-      <div class="form-group">
         <label class="form-label">카테고리 명칭</label>
         <input type="text" name="categoryName" class="form-input" th:value="${dto.categoryName}" required>
       </div>
@@ -134,7 +126,7 @@
     <div class="btn-group">
       <button type="submit" class="btn-submit">변경사항 저장</button>
       <button type="button" class="btn-delete" onclick="handleDelete()">데이터 삭제</button>
-      <a th:href="@{/admin/dashboard}" class="btn-back">수정 취소하고 돌아가기</a>
+      <a th:href="@{/admin/dashboard(section=${type == 'word' ? 'banned' : 'categories'})}" class="btn-back">수정 취소하고 돌아가기</a>
     </div>
   </form>
 </main>

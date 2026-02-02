@@ -1,6 +1,8 @@
 package com.example.nasda.repository;
 
 import com.example.nasda.domain.CategoryEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
@@ -12,4 +14,7 @@ public interface CategoryRepository extends JpaRepository<CategoryEntity, Intege
     boolean existsByCategoryName(String categoryName);
     // ✅ 이 한 줄이 없으면 Impl에서 백날 수정해도 빨간 줄 안 사라집니다!
     void deleteByCategoryName(String categoryName);
+
+    // 🔍 카테고리 검색 기능 추가 (categoryName 필드에서 검색)
+    Page<CategoryEntity> findByCategoryNameContaining(String categoryName, Pageable pageable);
 }

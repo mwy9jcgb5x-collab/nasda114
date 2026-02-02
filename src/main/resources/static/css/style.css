@@ -805,3 +805,195 @@ body {
     /* object-fit 제거 (height auto면 의미 없어짐) */
 }
 
+/* ========================================
+   11. Create Page (Post Create)
+======================================== */
+.create-page{
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 2.2rem 1.5rem 4rem;
+}
+
+.create-container{
+    max-width: 920px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid rgba(232,213,196,0.55);
+    border-radius: 22px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    padding: 2.2rem;
+}
+
+.create-head{
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgba(232,213,196,0.35);
+    margin-bottom: 1.6rem;
+}
+
+.create-title{
+    font-family: var(--font-serif);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-brown);
+    letter-spacing: -0.02em;
+}
+
+.create-sub{
+    margin-top: 0.4rem;
+    color: var(--color-brown-light);
+    font-size: 0.95rem;
+}
+
+.create-form{
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.form-grid{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group label{
+    display: inline-block;
+    margin-bottom: 0.55rem;
+    font-weight: 700;
+    color: var(--color-brown);
+    font-size: 0.92rem;
+}
+
+.req{
+    color: #d06f6f;
+    font-weight: 800;
+}
+
+.form-group input[type="text"],
+.form-group select,
+.form-group textarea{
+    width: 100%;
+    border: 1px solid rgba(232,213,196,0.75);
+    background: var(--color-bg-secondary);
+    color: var(--color-brown);
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+    font-family: var(--font-sans);
+    outline: none;
+    transition: box-shadow var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.form-group textarea{
+    resize: vertical;
+    min-height: 180px;
+}
+
+.form-group input[type="text"]::placeholder,
+.form-group textarea::placeholder{
+    color: var(--color-brown-light);
+}
+
+.form-group input[type="text"]:focus,
+.form-group select:focus,
+.form-group textarea:focus{
+    border-color: rgba(212,196,176,0.95);
+    box-shadow: 0 0 0 4px rgba(212,196,176,0.25);
+    background: #fff;
+}
+
+/* file box */
+.file-box{
+    position: relative;
+    border: 1px dashed rgba(232,213,196,0.95);
+    background: linear-gradient(to bottom, #fff, var(--color-bg-secondary));
+    border-radius: 16px;
+    padding: 1.05rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.file-input{
+    width: 140px;
+}
+
+.file-hint-title{
+    font-weight: 800;
+    color: var(--color-brown);
+    font-size: 0.95rem;
+}
+
+.file-hint-sub{
+    margin-top: 0.15rem;
+    color: var(--color-brown-light);
+    font-size: 0.85rem;
+}
+
+/* preview grid */
+.image-preview{
+    margin-top: 0.9rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+}
+
+.preview-item{
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(232,213,196,0.65);
+    background: #fff;
+    aspect-ratio: 1/1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-item img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* actions */
+.form-actions{
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.7rem;
+    margin-top: 0.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid rgba(232,213,196,0.35);
+}
+
+.btn-cancel,
+.btn-submit{
+    border: none;
+    border-radius: var(--radius-full);
+    padding: 0.75rem 1.15rem;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 0.9rem;
+    transition: transform var(--transition-fast), background-color var(--transition-fast), opacity var(--transition-fast);
+}
+
+.btn-cancel{
+    background: var(--color-border);
+    color: var(--color-brown);
+}
+.btn-cancel:hover{ background: var(--color-bg-tertiary); transform: translateY(-1px); }
+
+.btn-submit{
+    background: var(--color-primary);
+    color: #fff;
+}
+.btn-submit:hover{ background: var(--color-brown-hover); transform: translateY(-1px); }
+
+@media (max-width: 768px){
+    .create-page{ padding: 1.4rem 1rem 3rem; }
+    .create-container{ padding: 1.3rem; border-radius: 18px; }
+    .form-grid{ grid-template-columns: 1fr; }
+    .image-preview{ grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 420px){
+    .image-preview{ grid-template-columns: repeat(2, 1fr); }
+}

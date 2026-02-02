@@ -27,6 +27,8 @@ public interface AdminService {
 
     // [4단계: 금지어 관리]
     Page<ForbiddenWordDTO> getBannedWords(Pageable pageable); // 👈 페이징 추가
+    // [4단계: 금지어 관리 섹션에 추가]
+    Page<ForbiddenWordDTO> searchBannedWords(String keyword, Pageable pageable);
     List<ForbiddenWordDTO> getAllWords();
     void registerWord(ForbiddenWordDTO wordDTO);
     void modifyWord(ForbiddenWordDTO wordDTO);
@@ -36,6 +38,8 @@ public interface AdminService {
 
     // [5단계: 카테고리 관리]
     Page<CategoryDTO> getCategories(Pageable pageable);      // 👈 페이징 추가
+    // [5단계: 카테고리 관리 섹션에 추가]
+    Page<CategoryDTO> searchCategories(String keyword, Pageable pageable);
     List<CategoryDTO> getAllCategories();
     void registerCategory(CategoryDTO categoryDTO);
     void modifyCategory(CategoryDTO categoryDTO);
