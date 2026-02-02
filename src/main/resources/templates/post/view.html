@@ -371,24 +371,75 @@
 <script th:src="@{/js/comment.js}"></script>
 <script th:src="@{/js/post.js}"></script>
 
-<!-- Axios (혹시 header에서 안 로드될 경우 대비) -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-<!-- page inline data -->
 <script th:inline="javascript">
     window.ST_DATA = {
         postId: [[${post.id}]],
-        currentUserId: [[${session.loginUser.loginId}]],
-        currentUserNickname: [[${session.loginUser.nickname}]],
-        rawUserId: [[${session.loginUser.userId}]],
+        currentUserId: [[${session.loginUser != null ? session.loginUser.loginId : ''}]],
+        currentUserNickname: [[${session.loginUser != null ? session.loginUser.nickname : ''}]],
+        rawUserId: [[${session.loginUser != null ? session.loginUser.userId : ''}]],
         postOwnerId: [[${post.author.loginId}]]
     };
 </script>
 
 <script th:src="@{/js/sticker.js}"></script>
 
-<!-- Swiper -->
 <script src="https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // 1. 게시글 신고 버튼 이벤트 연결
+        const postReportBtn = document.querySelector('.btn-post-report');
+        if (postReportBtn) {
+            postReportBtn.addEventListener('click', function() {
+                const postId = this.getAttribute('data-post-id');
+                const reason = prompt("게시글 신고 사유를 입력해주세요:");
+
+                if (!reason) return; // 취소 시 중단
+                if (reason.trim() === "") return alert("사유를 입력해야 합니다.");
+
+                // FormData 형태로 전송 (컨트롤러의 @RequestParam에 맞춤)
+                const params = new URLSearchParams();
+                params.append('postId', postId);
+                params.append('reason', reason);
+
+                axios.post('/post/report', params)
+                    .then(res => alert(res.data))
+                    .catch(err => {
+                        if(err.response && err.response.status === 401) alert("로그인이 필요합니다.");
+                        else alert("신고 처리 중 오류가 발생했습니다.");
+                    });
+            });
+        }
+
+        // 2. 댓글 신고 버튼 이벤트 연결 (동적 리스트 대응)
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-comment-report') || e.target.closest('.btn-comment-report')) {
+                const btn = e.target.classList.contains('btn-comment-report') ? e.target : e.target.closest('.btn-comment-report');
+                const commentItem = btn.closest('.comment-item');
+                const commentId = commentItem.getAttribute('data-comment-id');
+
+                const reason = prompt("댓글 신고 사유를 입력해주세요:");
+                if (!reason) return;
+                if (reason.trim() === "") return alert("사유를 입력해야 합니다.");
+
+                const params = new URLSearchParams();
+                params.append('commentId', commentId);
+                params.append('reason', reason);
+
+                axios.post('/comment/report', params)
+                    .then(res => alert(res.data))
+                    .catch(err => {
+                        if(err.response && err.response.status === 401) alert("로그인이 필요합니다.");
+                        else alert("신고 처리 중 오류가 발생했습니다.");
+                    });
+            }
+        });
+    });
+</script>
+
 <script>
     (function () {
         const root = document.querySelector(".postImagesSwiper");
@@ -414,7 +465,6 @@
             },
         });
 
-        // ✅ 이미지 로드 후 레이아웃 한번 더 안정화
         root.querySelectorAll("img").forEach(img => {
             if (img.complete) return;
             img.addEventListener("load", () => swiper.update(), { once: true });

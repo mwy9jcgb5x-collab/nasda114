@@ -11,6 +11,7 @@ import com.example.nasda.service.PostImageService;
 import com.example.nasda.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -239,5 +240,40 @@ public class PostController {
         return "post/my-list";
     }
 
+    @PostMapping("/post/report")
+    @ResponseBody
+    public ResponseEntity<String> reportPost(@RequestParam Integer postId,
+                                             @RequestParam String reason) {
 
+        // 🚩 session 대신 기존에 사용하던 authUserService 사용
+        Integer userId = authUserService.getCurrentUserIdOrNull();
+
+        if (userId == null) {
+            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        }
+
+        try {
+            postService.reportPost(postId, userId, reason);
+            return ResponseEntity.ok("신고가 접수되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("신고 접수 중 오류 발생: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/comment/report")
+    @ResponseBody
+    public ResponseEntity<String> reportComment(@RequestParam Integer commentId,
+                                                @RequestParam String reason) {
+        Integer userId = authUserService.getCurrentUserIdOrNull();
+        if (userId == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+
+        try {
+            // CommentService에 만들 reportComment 메서드 호출
+            commentService.reportComment(commentId, userId, reason);
+            return ResponseEntity.ok("댓글 신고가 접수되었습니다.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("신고 처리 중 오류 발생");
+        }
+    }
 }
+

@@ -1,9 +1,6 @@
 package com.example.nasda.service;
 
-import com.example.nasda.domain.CategoryEntity;
-import com.example.nasda.domain.PostEntity;
-import com.example.nasda.domain.PostImageEntity;
-import com.example.nasda.domain.UserEntity;
+import com.example.nasda.domain.*;
 import com.example.nasda.domain.UserRepository;
 import com.example.nasda.dto.post.HomePostDto;
 import com.example.nasda.dto.post.PostViewDto;
@@ -11,6 +8,8 @@ import com.example.nasda.repository.CategoryRepository;
 import com.example.nasda.repository.CommentRepository;
 import com.example.nasda.repository.PostImageRepository;
 import com.example.nasda.repository.PostRepository;
+import com.example.nasda.repository.manager.PostReportRepository; // 🚩 추가됨
+import com.example.nasda.service.manager.AdminService; // 🚩 추가됨
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +18,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime; // 🚩 추가됨
 import java.util.List;
 
 @Service
@@ -31,6 +31,9 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostImageRepository postImageRepository;
     private final CommentRepository commentRepository;
+    private final PostReportRepository postReportRepository; // 🚩 추가됨
+    private final AdminService adminService; // 🚩 추가됨
+
 
     // 🔹 게시글 단건 조회
     @Transactional(readOnly = true)
@@ -78,6 +81,12 @@ public class PostService {
 
     // 🔹 게시글 생성
     public PostEntity create(Integer userId, Integer categoryId, String title, String description) {
+
+        // 🚩 [금지어 체크 추가] 관리자 설정 연동
+        if (adminService.checkForbiddenWords(title) || adminService.checkForbiddenWords(description)) {
+            throw new IllegalArgumentException("제목이나 내용에 금지어가 포함되어 있습니다.");
+        }
+
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
 
@@ -97,6 +106,11 @@ public class PostService {
     // 🔹 게시글 수정
     public void update(Integer postId, Integer userId,
                        Integer categoryId, String title, String description) {
+
+        // 🚩 [금지어 체크 추가] 수정 시에도 검사
+        if (adminService.checkForbiddenWords(title) || adminService.checkForbiddenWords(description)) {
+            throw new IllegalArgumentException("제목이나 내용에 금지어가 포함되어 있습니다.");
+        }
 
         PostEntity post = get(postId);
 
@@ -126,6 +140,25 @@ public class PostService {
 
         // ✅ 3. 게시글 삭제
         postRepository.delete(post);
+    }
+
+    // 🚩 [게시글 신고 로직 추가] 사용자 신고 시 호출됨
+    public void reportPost(Integer postId, Integer userId, String reason) {
+        PostEntity post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글 없음"));
+
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
+
+        PostReportEntity report = PostReportEntity.builder()
+                .post(post)
+                .reporter(user) // 엔티티 필드명 확인 (일반적으로 reporter)
+                .reason(reason)
+                .createdAt(LocalDateTime.now())
+                .status(ReportStatus.PENDING) // 처리 대기 상태
+                .build();
+
+        postReportRepository.save(report);
     }
 
     // ✅ 마이페이지: 내 게시글 전체 목록
@@ -159,7 +192,6 @@ public class PostService {
                             post.getTitle(),
                             post.getDescription(), // PostViewDto.content 에 description 매핑
                             post.getCategory().getCategoryName(),
-//                            new PostViewDto.AuthorDto(post.getUser().getNickname()),
                             new PostViewDto.AuthorDto(post.getUser().getNickname(), post.getUser().getUserId(), post.getUser().getLoginId()),
                             images,
                             imageItems,
