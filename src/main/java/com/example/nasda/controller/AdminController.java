@@ -34,7 +34,6 @@ public class AdminController {
                             @RequestParam(value = "commentPage", defaultValue = "0") int commentPage,
                             @RequestParam(value = "wordPage", defaultValue = "0") int wordPage,
                             @RequestParam(value = "catPage", defaultValue = "0") int catPage,
-                            // 🔍 검색 파라미터 추가
                             @RequestParam(value = "wordKeyword", required = false) String wordKeyword,
                             @RequestParam(value = "catKeyword", required = false) String catKeyword) {
 
@@ -43,7 +42,6 @@ public class AdminController {
         try {
             model.addAttribute("section", section);
             model.addAttribute("type", type);
-            // 검색어 유지용으로 다시 전달
             model.addAttribute("wordKeyword", wordKeyword);
             model.addAttribute("catKeyword", catKeyword);
 
@@ -54,7 +52,6 @@ public class AdminController {
 
             model.addAttribute("userList", adminService.getUserStatusList());
 
-            // 1. 신고 목록
             Page<PostReportDTO> postReportPage = adminService.getPendingPostReports(postPageable);
             model.addAttribute("postReportList", postReportPage.getContent());
             model.addAttribute("postTotalPages", postReportPage.getTotalPages());
@@ -65,10 +62,8 @@ public class AdminController {
             model.addAttribute("commentTotalPages", commentReportPage.getTotalPages());
             model.addAttribute("commentCurrentPage", commentReportPage.getNumber());
 
-            // 2. 금지어 목록 (검색 로직 추가)
             Page<ForbiddenWordDTO> wordPageResult;
             if (wordKeyword != null && !wordKeyword.isEmpty()) {
-                // 서비스에 searchBannedWords 메서드가 있다고 가정
                 wordPageResult = adminService.searchBannedWords(wordKeyword, wordPageable);
             } else {
                 wordPageResult = adminService.getBannedWords(wordPageable);
@@ -77,10 +72,8 @@ public class AdminController {
             model.addAttribute("wordCurrentPage", wordPageResult.getNumber());
             model.addAttribute("wordTotalPages", wordPageResult.getTotalPages());
 
-            // 3. 카테고리 목록 (검색 로직 추가)
             Page<CategoryDTO> catPageResult;
             if (catKeyword != null && !catKeyword.isEmpty()) {
-                // 서비스에 searchCategories 메서드가 있다고 가정
                 catPageResult = adminService.searchCategories(catKeyword, catPageable);
             } else {
                 catPageResult = adminService.getCategories(catPageable);
@@ -91,7 +84,6 @@ public class AdminController {
 
         } catch (Exception e) {
             log.error("데이터 로딩 오류: " + e.getMessage());
-            // 에러 시 빈 리스트 처리 로직 유지
         }
         return "admin/dashboard";
     }
@@ -100,11 +92,25 @@ public class AdminController {
     public String processReport(@RequestParam("reportId") Integer reportId,
                                 @RequestParam("action") String action,
                                 @RequestParam("type") String type,
+                                @RequestParam(value = "reason", required = false) String reason, // 🚩 사유 추가
                                 RedirectAttributes rttr) {
-        adminService.processPostReport(reportId, action, "관리자 승인 처리");
+        try {
+            if ("post".equals(type)) {
+                adminService.processPostReport(reportId, action, reason); // 🚩 인자 추가
+            } else if ("comment".equals(type)) {
+                adminService.processCommentReport(reportId, action, reason); // 🚩 인자 추가
+            }
+
+            String successMsg = "APPROVE".equals(action) ? "삭제되었습니다." : "반려되었습니다.";
+            rttr.addFlashAttribute("result", successMsg);
+
+        } catch (Exception e) {
+            log.error("신고 처리 오류: " + e.getMessage());
+            rttr.addFlashAttribute("error", "처리 중 오류가 발생했습니다.");
+        }
+
         rttr.addAttribute("section", "reports");
         rttr.addAttribute("type", type);
-        rttr.addFlashAttribute("result", "processed");
         return "redirect:/admin/dashboard";
     }
 

@@ -94,29 +94,23 @@
 
             <section id="users-section" class="content-section">
                 <h3 class="admin-title">계정 목록</h3>
-
                 <div th:each="user : ${userList}" class="user-item" style="border-bottom: 1px solid #eee; padding: 10px 0;">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <strong th:text="${user.nickname}" style="font-size: 1.1em;">닉네임</strong>
-
                             <p style="margin-top: 5px; color: #8a7e72; font-size: 0.9em;">
                                 상태: <span th:text="${user.status}"
                                           th:style="${user.status == 'SUSPENDED' ? 'color:#e74c3c; font-weight:bold;' : ''}"></span>
-
                                 <span th:if="${user.suspension_end_date != null}"
                                       th:text="' | 종료일: ' + ${user.suspension_end_date}"></span>
                             </p>
                         </div>
-
-
                     </div>
                 </div>
             </section>
 
             <section id="reports-section" class="content-section">
                 <h3 class="admin-title">신고 목록</h3>
-
                 <div style="display: flex; gap: 10px; margin-bottom: 25px;">
                     <a th:href="@{/admin/dashboard(section='reports', type='post')}"
                        th:style="${type == 'post' ? 'padding:0.6rem 1.2rem; background:#4a3f35; color:white; border-radius:0.5rem; text-decoration:none;' : 'padding:0.6rem 1.2rem; background:#f5f5f5; color:#4a3f35; border-radius:0.5rem; text-decoration:none; border:1px solid #ddd;'}">
@@ -136,19 +130,22 @@
                             <span th:text="${report.status}" style="color: #c33; font-weight: bold;"></span>
                         </div>
                         <p th:text="'사유: ' + ${report.reason}" style="margin-top:0.75rem; color: #8a7e72;"></p>
-                        <form th:action="@{/admin/report/process}" method="post" style="margin-top: 1rem;">
+
+                        <form th:action="@{/admin/report/process}" method="post" style="margin-top: 1rem; display: flex; gap: 8px;"
+                              onsubmit="return handleReportSubmit(this, event)">
                             <input type="hidden" name="reportId" th:value="${report.reportId}">
                             <input type="hidden" name="type" value="post">
-                            <button name="action" value="APPROVE" style="padding:0.4rem 0.8rem; background:#4a3f35; color:white; border-radius:0.4rem; border:none; cursor:pointer;">승인(삭제)</button>
+                            <input type="hidden" name="reason" value=""> <button name="action" value="APPROVE" style="padding:0.4rem 0.8rem; background:#4a3f35; color:white; border-radius:0.4rem; border:none; cursor:pointer;">승인(삭제)</button>
+                            <button name="action" value="REJECT" style="padding:0.4rem 0.8rem; background:#eee1d5; color:#4a3f35; border-radius:0.4rem; border:1px solid #ddd; cursor:pointer;">반려(무시)</button>
                         </form>
                     </div>
 
                     <div th:if="${postTotalPages > 0}" style="display: flex; justify-content: center; gap: 8px; margin-top: 25px;">
                         <a th:href="@{/admin/dashboard(postPage=${postCurrentPage - 1}, section='reports', type='post')}" th:if="${postCurrentPage > 0}" style="text-decoration: none; color: #4a3f35;">&lt; 이전</a>
                         <span th:each="i : ${#numbers.sequence(0, postTotalPages - 1)}">
-                <a th:href="@{/admin/dashboard(postPage=${i}, section='reports', type='post')}" th:text="${i + 1}"
-                   th:style="${i == postCurrentPage ? 'font-weight:bold; color:#c33; text-decoration: underline;' : 'text-decoration: none; color: #4a3f35;'}"></a>
-            </span>
+                            <a th:href="@{/admin/dashboard(postPage=${i}, section='reports', type='post')}" th:text="${i + 1}"
+                               th:style="${i == postCurrentPage ? 'font-weight:bold; color:#c33; text-decoration: underline;' : 'text-decoration: none; color: #4a3f35;'}"></a>
+                        </span>
                         <a th:href="@{/admin/dashboard(postPage=${postCurrentPage + 1}, section='reports', type='post')}" th:if="${postCurrentPage < postTotalPages - 1}" style="text-decoration: none; color: #4a3f35;">다음 &gt;</a>
                     </div>
                 </div>
@@ -161,19 +158,23 @@
                             <span th:text="${cReport.status}" style="color: #c33; font-weight: bold;"></span>
                         </div>
                         <p th:text="'사유: ' + ${cReport.reason}" style="margin-top:0.75rem; color: #8a7e72;"></p>
-                        <form th:action="@{/admin/report/process}" method="post" style="margin-top: 1rem;">
+
+                        <form th:action="@{/admin/report/process}" method="post" style="margin-top: 1rem; display: flex; gap: 8px;"
+                              onsubmit="return handleReportSubmit(this, event)">
                             <input type="hidden" name="reportId" th:value="${cReport.reportId}">
                             <input type="hidden" name="type" value="comment">
+                            <input type="hidden" name="reason" value="">
                             <button name="action" value="APPROVE" style="padding:0.4rem 0.8rem; background:#4a3f35; color:white; border-radius:0.4rem; border:none; cursor:pointer;">승인(삭제)</button>
+                            <button name="action" value="REJECT" style="padding:0.4rem 0.8rem; background:#eee1d5; color:#4a3f35; border-radius:0.4rem; border:1px solid #ddd; cursor:pointer;">반려(무시)</button>
                         </form>
                     </div>
 
                     <div th:if="${commentTotalPages > 0}" style="display: flex; justify-content: center; gap: 8px; margin-top: 25px;">
                         <a th:href="@{/admin/dashboard(commentPage=${commentCurrentPage - 1}, section='reports', type='comment')}" th:if="${commentCurrentPage > 0}" style="text-decoration: none; color: #4a3f35;">&lt; 이전</a>
                         <span th:each="i : ${#numbers.sequence(0, commentTotalPages - 1)}">
-                <a th:href="@{/admin/dashboard(commentPage=${i}, section='reports', type='comment')}" th:text="${i + 1}"
-                   th:style="${i == commentCurrentPage ? 'font-weight:bold; color:#c33; text-decoration: underline;' : 'text-decoration: none; color: #4a3f35;'}"></a>
-            </span>
+                            <a th:href="@{/admin/dashboard(commentPage=${i}, section='reports', type='comment')}" th:text="${i + 1}"
+                               th:style="${i == commentCurrentPage ? 'font-weight:bold; color:#c33; text-decoration: underline;' : 'text-decoration: none; color: #4a3f35;'}"></a>
+                        </span>
                         <a th:href="@{/admin/dashboard(commentPage=${commentCurrentPage + 1}, section='reports', type='comment')}" th:if="${commentCurrentPage < commentTotalPages - 1}" style="text-decoration: none; color: #4a3f35;">다음 &gt;</a>
                     </div>
                 </div>
@@ -181,93 +182,78 @@
 
             <section id="banned-section" class="content-section">
                 <h3 class="admin-title">금지어 목록</h3>
-
                 <div style="margin-bottom: 1.5rem;">
                     <form th:action="@{/admin/dashboard}" method="get" style="display: flex; gap: 10px;">
                         <input type="hidden" name="section" value="banned">
                         <input type="text" name="wordKeyword" th:value="${wordKeyword}" placeholder="금지어 검색..."
                                style="flex: 1; padding: 0.8rem; border: 1px solid #eee1d5; border-radius: 8px;">
-                        <button type="submit" style="padding: 0.8rem 1.5rem; background: #4a3f35; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
-                            검색
-                        </button>
+                        <button type="submit" style="padding: 0.8rem 1.5rem; background: #4a3f35; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">검색</button>
                     </form>
                 </div>
-
-                <a th:href="@{/admin/register(type='word')}"
-                   style="display:inline-block; margin-bottom:1.5rem; color:#4a3f35; font-weight:bold;">
-                    + 금지어 추가
-                </a>
-
-                <div style="display: block;">
-                    <div th:each="word : ${wordList}"
-                         class="word-item"
-                         style="display: flex; justify-content: space-between; align-items: center; padding: 1.2rem; background: #fdfaf7; border: 1px solid #eee1d5; border-radius: 12px; margin-bottom: 1rem; width: 100%;">
-                        <span th:text="${word.word}" style="font-weight: 500;"></span>
-                        <div style="display: flex; gap: 12px;">
-                            <a th:href="@{/admin/modify(type='word', id=${word.forbiddenwordId})}" style="color:#4a3f35; text-decoration: none; font-size: 0.9rem;">수정</a>
-                            <a th:href="@{/admin/delete(type='word', id=${word.forbiddenwordId})}" onclick="return confirm('삭제')" style="color:#e74c3c; text-decoration: none; font-size: 0.9rem;">삭제</a>
-                        </div>
+                <a th:href="@{/admin/register(type='word')}" style="display:inline-block; margin-bottom:1.5rem; color:#4a3f35; font-weight:bold;">+ 금지어 추가</a>
+                <div th:each="word : ${wordList}" class="word-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1.2rem; background: #fdfaf7; border: 1px solid #eee1d5; border-radius: 12px; margin-bottom: 1rem; width: 100%;">
+                    <span th:text="${word.word}" style="font-weight: 500;"></span>
+                    <div style="display: flex; gap: 12px;">
+                        <a th:href="@{/admin/modify(type='word', id=${word.forbiddenwordId})}" style="color:#4a3f35; text-decoration: none; font-size: 0.9rem;">수정</a>
+                        <a th:href="@{/admin/delete(type='word', id=${word.forbiddenwordId})}" onclick="return confirm('삭제')" style="color:#e74c3c; text-decoration: none; font-size: 0.9rem;">삭제</a>
                     </div>
                 </div>
-
             </section>
 
             <section id="categories-section" class="content-section">
                 <h3 class="admin-title">카테고리 목록</h3>
-
                 <div style="margin-bottom: 1.5rem;">
                     <form th:action="@{/admin/dashboard}" method="get" style="display: flex; gap: 10px;">
                         <input type="hidden" name="section" value="categories">
                         <input type="text" name="catKeyword" th:value="${catKeyword}" placeholder="카테고리 검색..."
                                style="flex: 1; padding: 0.8rem; border: 1px solid #eee1d5; border-radius: 8px;">
-                        <button type="submit" style="padding: 0.8rem 1.5rem; background: #4a3f35; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
-                            검색
-                        </button>
+                        <button type="submit" style="padding: 0.8rem 1.5rem; background: #4a3f35; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">검색</button>
                     </form>
                 </div>
-
-                <a th:href="@{/admin/register(type='category')}"
-                   style="display:inline-block; margin-bottom:1.5rem; color:#4a3f35; font-weight:bold;">
-                    + 카테고리 추가
-                </a>
-
-                <div style="display: block;">
-                    <div th:each="cat : ${categoryList}"
-                         class="cat-item"
-                         style="display: flex; justify-content: space-between; align-items: center; padding: 1.2rem; background: #fdfaf7; border: 1px solid #eee1d5; border-radius: 12px; margin-bottom: 1rem; width: 100%;">
-                        <span th:text="${cat.categoryName}" style="font-weight: 500;"></span>
-                        <div style="display: flex; gap: 12px;">
-                            <a th:href="@{/admin/modify(type='category', id=${cat.categoryId})}" style="color:#4a3f35; text-decoration: none; font-size: 0.9rem;">수정</a>
-                            <a th:href="@{/admin/delete(type='category', id=${cat.categoryId})}" onclick="return confirm('삭제')" style="color:#e74c3c; text-decoration: none; font-size: 0.9rem;">삭제</a>
-                        </div>
+                <a th:href="@{/admin/register(type='category')}" style="display:inline-block; margin-bottom:1.5rem; color:#4a3f35; font-weight:bold;">+ 카테고리 추가</a>
+                <div th:each="cat : ${categoryList}" class="cat-item" style="display: flex; justify-content: space-between; align-items: center; padding: 1.2rem; background: #fdfaf7; border: 1px solid #eee1d5; border-radius: 12px; margin-bottom: 1rem; width: 100%;">
+                    <span th:text="${cat.categoryName}" style="font-weight: 500;"></span>
+                    <div style="display: flex; gap: 12px;">
+                        <a th:href="@{/admin/modify(type='category', id=${cat.categoryId})}" style="color:#4a3f35; text-decoration: none; font-size: 0.9rem;">수정</a>
+                        <a th:href="@{/admin/delete(type='category', id=${cat.categoryId})}" onclick="return confirm('삭제')" style="color:#e74c3c; text-decoration: none; font-size: 0.9rem;">삭제</a>
                     </div>
                 </div>
-
             </section>
-
         </div>
     </div>
 </main>
 
 <script th:inline="javascript">
+    // 🚩 [추가] 반려 시 사유 입력을 위한 핸들러
+    function handleReportSubmit(form, event) {
+        const action = event.submitter.value;
+
+        if (action === 'REJECT') {
+            const reason = prompt("반려 사유를 입력해주세요:");
+            if (reason === null) return false; // 취소 시 폼 제출 중단
+            if (reason.trim() === "") {
+                alert("반려 사유는 필수입니다.");
+                return false;
+            }
+            form.querySelector('input[name="reason"]').value = reason;
+        }
+        return true;
+    }
+
     function showSection(sectionId, event) {
-        // 1. 모든 섹션 숨기기
         document.querySelectorAll('.content-section').forEach(s => {
             s.classList.remove('active');
-            s.style.display = 'none'; // 확실하게 숨김
+            s.style.display = 'none';
         });
 
-        // 2. 선택한 섹션만 보이기
         const targetSection = document.getElementById(sectionId + '-section');
         if (targetSection) {
             targetSection.classList.add('active');
-            targetSection.style.display = 'block'; // 확실하게 표시
+            targetSection.style.display = 'block';
         }
 
-        // 3. 버튼 활성화 상태 변경
         document.querySelectorAll('.admin-menu-item').forEach(item => item.classList.remove('active'));
 
-        // 클릭 이벤트가 있으면 해당 버튼 활성화, 없으면 ID로 찾아서 활성화
         if(event && event.currentTarget) {
             event.currentTarget.classList.add('active');
         } else {
@@ -281,20 +267,19 @@
     }
 
     window.onload = function() {
-        // 1. 섹션 표시 (기본값 users)
         const urlParams = new URLSearchParams(window.location.search);
         const section = urlParams.get('section') || 'users';
         showSection(section);
 
-        // 2. 오류 메시지만 유지 (중복 단어 등 방지용)
-        const errorMsg = [[${error}]];
-        if (errorMsg) {
-            setTimeout(() => {
-                alert(errorMsg);
-            }, 100);
+        const resultMsg = /*[[${result}]]*/ null;
+        if (resultMsg && resultMsg !== 'null' && resultMsg !== '') {
+            setTimeout(() => { alert(resultMsg); }, 200);
         }
 
-        // [삭제됨] "정상적으로 처리되었습니다" 알럿 로직을 제거했습니다.
+        const errorMsg = /*[[${error}]]*/ null;
+        if (errorMsg && errorMsg !== 'null' && errorMsg !== '') {
+            setTimeout(() => { alert(errorMsg); }, 200);
+        }
     };
 </script>
 </body>

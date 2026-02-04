@@ -71,11 +71,18 @@ public interface PostRepository extends JpaRepository<PostEntity, Integer> {
     void deleteByCategoryId(@Param("categoryId") Integer categoryId);
 
     @Query("""
-    select p from PostEntity p
+
+            select p from PostEntity p
     where lower(p.title) like lower(concat('%', :keyword, '%'))
        or lower(p.description) like lower(concat('%', :keyword, '%'))
     order by p.createdAt desc
     """)
     List<PostEntity> searchTitleOrDescription(@Param("keyword") String keyword);
 
-}
+    // 수정 전: @Transactional (jakarta...) 가 붙어있음
+    // 수정 후: 아래처럼 @Modifying 옵션을 추가하고 Transactional은 제거하세요.
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @org.springframework.transaction.annotation.Transactional // 스프링 트랜잭션 사용
+    @Query("delete from PostImageEntity pi where pi.post.postId = :postId")
+    void deletePostImagesByPostId(@Param("postId") Integer postId);
+    }

@@ -29,4 +29,10 @@ public interface CommentRepository extends JpaRepository<CommentEntity, Integer>
     @Transactional
     @Query(value = "UPDATE comments SET user_id = 0 WHERE user_id = :userId", nativeQuery = true) // NULL 대신 0
     void setAuthorNull(@Param("userId") Integer userId);
+
+    // 🚩 [추가] 게시글 삭제 시 관련 댓글만 광속으로 지우기 위해 추가
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM comments WHERE post_id = :postId", nativeQuery = true)
+    void deleteByPostIdNative(@Param("postId") Integer postId);
 }
