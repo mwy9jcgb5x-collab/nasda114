@@ -72,6 +72,7 @@ public class AdminServiceImpl implements AdminService {
                 .map(report -> modelMapper.map(report, CommentReportDTO.class));
     }
 
+
     @Override
     @Transactional
     public void processPostReport(
@@ -84,12 +85,24 @@ public class AdminServiceImpl implements AdminService {
                 .orElseThrow(() -> new RuntimeException("신고 내역을 찾을 수 없습니다."));
 
         if ("APPROVE".equals(action)) {
-            postReportRepository.delete(report);
-            postReportRepository.flush();
-            log.info("게시글 신고 #{} 건만 목록에서 삭제 완료", reportId);
+            PostEntity post = report.getPost();
+
+            if (post != null) {
+                log.info("게시글 삭제 시작: ID {}", post.getPostId());
+
+                // 1. 해당 게시글에 달린 '모든 게시글 신고 내역' 삭제 (댓글 신고 지울 때랑 같은 원리)
+                postReportRepository.deleteByPost(post);
+
+                // 2. [필수] 게시글에 달린 이미지 먼저 삭제 (이미지가 있으면 post만 삭제 시 에러남)
+                // PostRepository에 이 메서드가 이미 있으시죠?
+                postRepository.deletePostImagesByPostId(post.getPostId());
+
+                // 3. 원본 게시글 삭제 (댓글 삭제할 때 commentRepository.delete 쓴 거랑 똑같음!)
+                postRepository.delete(post);
+            }
+            log.info("게시글 신고 승인 및 원본 삭제 완료");
 
         } else if ("REJECT".equals(action)) {
-            // 🚩 [수정] 엔티티 필드명에 맞춤: user -> receiver, content -> message, getUser -> getReporter
             NotificationEntity alarm = NotificationEntity
                     .builder()
                     .receiver(report.getReporter())
@@ -99,36 +112,40 @@ public class AdminServiceImpl implements AdminService {
             notificationRepository.save(alarm);
 
             postReportRepository.delete(report);
-            postReportRepository.flush();
         }
+        postReportRepository.flush();
     }
+
 
     @Override
     public List<Map<String, Object>> getUserStatusList() {
         return userRepository.findAllUserStatusRaw();
     }
 
-    // 댓글 신고 처리
+
     @Override
     @Transactional
-    public void processCommentReport(
-            Integer reportId,
-            String action,
-            String reason
-    ) {
-        CommentReportEntity report = commentReportRepository
-                .findById(reportId)
+    public void processCommentReport(Integer reportId, String action, String reason) {
+        CommentReportEntity report = commentReportRepository.findById(reportId)
                 .orElseThrow(() -> new RuntimeException("신고 내역을 찾을 수 없습니다."));
 
         if ("APPROVE".equals(action)) {
-            commentReportRepository.delete(report);
-            commentReportRepository.flush();
-            log.info("댓글 신고 #{} 건만 목록에서 삭제 완료", reportId);
+            CommentEntity comment = report.getComment();
+
+            if (comment != null) {
+                log.info("댓글 삭제 시작: ID {}", comment.getCommentId());
+
+                // 1순위: 해당 댓글에 달린 '모든 댓글 신고 내역' 삭제 (나 자신 포함)
+                commentReportRepository.deleteByComment(comment);
+
+                // 2순위: 원본 댓글 삭제
+                commentRepository.delete(comment);
+            }
+            log.info("댓글 신고 승인 및 원본 삭제 완료");
 
         } else if ("REJECT".equals(action)) {
-            // 🚩 [수정] 엔티티 필드명에 맞춤: user -> receiver, content -> message, getUser -> getReporter
-            NotificationEntity alarm = NotificationEntity
-                    .builder()
+            // 반려 로직 (기존 유지)
+            NotificationEntity alarm = NotificationEntity.builder()
                     .receiver(report.getReporter())
                     .message("신고하신 댓글 건이 반려되었습니다. 사유: " + reason)
                     .isRead(false)
@@ -136,8 +153,8 @@ public class AdminServiceImpl implements AdminService {
             notificationRepository.save(alarm);
 
             commentReportRepository.delete(report);
-            commentReportRepository.flush();
         }
+        commentReportRepository.flush();
     }
 
     // 4. 금지어 관리

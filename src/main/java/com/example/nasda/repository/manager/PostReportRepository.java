@@ -1,5 +1,6 @@
 package com.example.nasda.repository.manager;
 
+import com.example.nasda.domain.PostEntity;
 import com.example.nasda.domain.PostReportEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -20,4 +21,6 @@ public interface PostReportRepository extends JpaRepository<PostReportEntity, In
     @Transactional
     @Query("DELETE FROM PostReportEntity r WHERE r.post.category.categoryId = :categoryId")
     void deleteByCategoryId(@Param("categoryId") Integer categoryId);
+
+    void deleteByPost(PostEntity post);
 }

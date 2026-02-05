@@ -1,5 +1,6 @@
 package com.example.nasda.repository.manager;
 
+import com.example.nasda.domain.CommentEntity;
 import com.example.nasda.domain.CommentReportEntity;
 import com.example.nasda.domain.ReportStatus;
 import org.springframework.data.domain.Page;
@@ -27,4 +28,7 @@ public interface CommentReportRepository extends JpaRepository<CommentReportEnti
 
     Page<CommentReportEntity> findByStatus(ReportStatus status, Pageable pageable);
     List<CommentReportEntity> findByStatus(ReportStatus status);
+
+
+    void deleteByComment(CommentEntity comment);
 }
